@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\mocs_compilation_Debug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\src\ImageViewer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\src\ViewerWidget.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\UVLADIE3JM_Debug\qrc_ImageViewer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\mocs_compilation_Release.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\UVLADIE3JM_Release\qrc_ImageViewer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\mocs_compilation_MinSizeRel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\UVLADIE3JM_MinSizeRel\qrc_ImageViewer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\mocs_compilation_RelWithDebInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\UVLADIE3JM_RelWithDebInfo\qrc_ImageViewer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\src\ImageViewer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\src\ViewerWidget.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\include_Debug\src\ui_ImageViewer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\include_Release\src\ui_ImageViewer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\include_MinSizeRel\src\ui_ImageViewer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\include_RelWithDebInfo\src\ui_ImageViewer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\CMakeFiles\ed182ed2fffcf9566d295ee09bbcdbe6\autouic_(CONFIG).stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\CMakeFiles\69505640915f8b571aee666908d0c860\qrc_ImageViewer.cpp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\src\ImageViewer.ui">
+      <Filter>src</Filter>
+    </None>
+    <None Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\src\ImageViewer.qrc">
+      <Filter>src</Filter>
+    </None>
+    <None Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\autouic_Debug.stamp" />
+    <None Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\autouic_Release.stamp" />
+    <None Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\autouic_MinSizeRel.stamp" />
+    <None Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\ImageViewer_autogen\autouic_RelWithDebInfo.stamp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{0A9B50BB-0073-3DD3-86A0-FD7CAC0E4F3E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{AE47F960-2ADB-3654-944D-1CA9B458D507}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{DDA94775-BA0D-3512-B1C4-7353DD58A5E3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{5FFC5FE3-B02A-3960-BFE5-7BAB2414B146}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
