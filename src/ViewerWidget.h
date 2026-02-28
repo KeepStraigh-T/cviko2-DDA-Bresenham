@@ -28,10 +28,12 @@ public:
 
 	//Draw functions
 	void drawLine(QPoint start, QPoint end, QColor color, int algType = 0);
+	void drawCircle(QPoint center, QPoint end, QColor color);
 	void setDrawLineBegin(QPoint begin) { drawLineBegin = begin; }
 	QPoint getDrawLineBegin() { return drawLineBegin; }
 	void setDrawLineActivated(bool state) { drawLineActivated = state; }
 	bool getDrawLineActivated() { return drawLineActivated; }
+	static void swapPoints(QPoint& start, QPoint& end);
 
 	//Get/Set functions
 	uchar* getData() { return data; }
@@ -45,6 +47,7 @@ public:
 	//Algorithms
 	void drawLineDDA(QPoint start, QPoint end, QColor color);
 	void drawLineBresenham(QPoint start, QPoint end, QColor color);
+	void drawCircleBresenham(QPoint center, QPoint end, QColor color);
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;

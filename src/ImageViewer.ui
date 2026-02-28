@@ -6,27 +6,33 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1070</width>
-    <height>784</height>
+    <width>1052</width>
+    <height>799</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>ImageViewer</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QGridLayout" name="gridLayout_2">
-    <item row="0" column="0">
+   <layout class="QVBoxLayout" name="verticalLayout_3">
+    <item>
      <widget class="QScrollArea" name="scrollArea">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="widgetResizable">
        <bool>true</bool>
       </property>
       <widget class="QWidget" name="scrollAreaWidgetContents">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="geometry">
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>925</width>
-         <height>709</height>
+         <width>869</width>
+         <height>724</height>
         </rect>
        </property>
       </widget>
@@ -39,7 +45,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1070</width>
+     <width>1052</width>
      <height>22</height>
     </rect>
    </property>
@@ -101,6 +107,20 @@
         <string>Draw</string>
        </property>
        <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0" colspan="2">
+         <widget class="QComboBox" name="comboBoxLineAlg">
+          <item>
+           <property name="text">
+            <string>DDA</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Bresenham</string>
+           </property>
+          </item>
+         </widget>
+        </item>
         <item row="1" column="0">
          <widget class="QToolButton" name="toolButtonDrawLine">
           <property name="text">
@@ -124,18 +144,23 @@
           </property>
          </spacer>
         </item>
-        <item row="0" column="0" colspan="2">
-         <widget class="QComboBox" name="comboBoxLineAlg">
-          <item>
-           <property name="text">
-            <string>DDA</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Bresenham</string>
-           </property>
-          </item>
+        <item row="2" column="0">
+         <widget class="QPushButton" name="toolButtonDrawCircle">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Circle</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
        </layout>

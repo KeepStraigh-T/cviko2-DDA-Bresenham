@@ -75,7 +75,20 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 			w->update();
 		}
 	}
+	else if(e->button() == Qt::LeftButton && ui->toolButtonDrawCircle->isChecked())
+	{
+		if (w->getDrawLineActivated()) {
+			w->drawCircle(w->getDrawLineBegin(), e->pos(), globalColor);
+			w->setDrawLineActivated(false);
+		}
+		else {
+			w->setDrawLineBegin(e->pos());
+			w->setDrawLineActivated(true);
+			w->update();
+		}		
+	}
 }
+
 void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event)
 {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
