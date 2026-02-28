@@ -136,6 +136,14 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
 	//update();
 }
 
+void ViewerWidget::drawCircle(QPoint center, QPoint end, QColor color)
+{
+	if (!img || !data) return;
+
+	drawCircleBresenham(center, end, color);
+	update();
+}
+
 void ViewerWidget::clear()
 {
 	if (!img) return;
@@ -145,6 +153,9 @@ void ViewerWidget::clear()
 
 void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
 {
+	if((start.x() == end.x()) && (start.y() == end.y()))
+		return;
+
 	int dx = end.x() - start.x();
 	int dy = end.y() - start.y();
 
@@ -166,6 +177,86 @@ void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
 
 void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
 {
+
+	if(qAbs(end.y() - start.y()) < qAbs(end.x() - start.x()))			// dy < dx -> 0<m<1 or -1<m<0
+	{
+		if(start.x() > end.x())																			// x0 > x1
+			ViewerWidget::swapPoints(start, end);
+
+		int dx = end.x() - start.x();
+		int dy = end.y() - start.y();
+
+		int yInc = 1;
+		if(dy < 0)
+		{
+			dy = -dy;
+			yInc = -1;
+		}
+
+		int k1 = 2 * dy;
+		int k2 = 2 * dy - 2 * dx;
+		int p = 2 * dy - dx;
+
+		int x = start.x();
+		int y = start.y();
+
+		while(x < end.x())
+		{
+			x += 1;
+
+			if(p > 0)
+			{
+				y += yInc;
+				p += k2;
+			}
+			else
+				p += k1;
+
+			setPixel(x, y, color);
+		}
+	}
+	else
+	{
+		if(start.y() > end.y())																	// y0 > y1
+			ViewerWidget::swapPoints(start, end);
+
+		int dx = end.x() - start.x();
+		int dy = end.y() - start.y();
+
+		int xInc = 1;
+		if(dx < 0)
+		{
+			dx = -dx;
+			xInc = -1;
+		}
+
+		int k1 = 2 * dx;
+		int k2 = 2 * dx - 2 * dy;
+		int p = 2 * dx - dy;
+
+		int x = start.x();
+		int y = start.y();
+
+		while(y < end.y())
+		{
+			y += 1;
+
+			if(p > 0)
+			{
+				x += xInc;
+				p += k2;
+			}
+			else
+				p += k1;
+
+			setPixel(x, y, color);
+		}	
+	}
+}
+
+void drawCircleBresenham(QPoint center, QPoint end, QColor color)
+{
+	int radius = center.x() * center.x() + end
 }
 
 //Slots
@@ -176,4 +267,11 @@ void ViewerWidget::paintEvent(QPaintEvent* event)
 
 	QRect area = event->rect();
 	painter.drawImage(area, *img, area);
+}
+
+void ViewerWidget::swapPoints(QPoint& start, QPoint& end)
+{
+	QPoint temp = start;
+	start = end;
+	end = temp;
 }
