@@ -75,7 +75,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 			w->update();
 		}
 	}
-	else if(e->button() == Qt::LeftButton && ui->toolButtonDrawCircle->isChecked())
+	else if((e->button() == Qt::LeftButton) && ui->toolButtonDrawCircle->isChecked() && (ui->comboBoxLineAlg->currentIndex() == 1))
 	{
 		if (w->getDrawLineActivated()) {
 			w->drawCircle(w->getDrawLineBegin(), e->pos(), globalColor);

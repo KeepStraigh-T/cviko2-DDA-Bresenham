@@ -58,7 +58,7 @@ public:
     QComboBox *comboBoxLineAlg;
     QToolButton *toolButtonDrawLine;
     QSpacerItem *horizontalSpacer;
-    QPushButton *pushButton;
+    QPushButton *toolButtonDrawCircle;
     QSpacerItem *verticalSpacer;
 
     void setupUi(QMainWindow *ImageViewerClass)
@@ -84,6 +84,7 @@ public:
         verticalLayout_3->setObjectName("verticalLayout_3");
         scrollArea = new QScrollArea(centralWidget);
         scrollArea->setObjectName("scrollArea");
+        scrollArea->setEnabled(true);
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName("scrollAreaWidgetContents");
@@ -153,16 +154,17 @@ public:
 
         gridLayout->addItem(horizontalSpacer, 1, 1, 1, 1);
 
-        pushButton = new QPushButton(groupBox_2);
-        pushButton->setObjectName("pushButton");
+        toolButtonDrawCircle = new QPushButton(groupBox_2);
+        toolButtonDrawCircle->setObjectName("toolButtonDrawCircle");
+        toolButtonDrawCircle->setEnabled(true);
         QSizePolicy sizePolicy(QSizePolicy::Policy::Fixed, QSizePolicy::Policy::Fixed);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
-        sizePolicy.setHeightForWidth(pushButton->sizePolicy().hasHeightForWidth());
-        pushButton->setSizePolicy(sizePolicy);
-        pushButton->setCheckable(true);
+        sizePolicy.setHeightForWidth(toolButtonDrawCircle->sizePolicy().hasHeightForWidth());
+        toolButtonDrawCircle->setSizePolicy(sizePolicy);
+        toolButtonDrawCircle->setCheckable(true);
 
-        gridLayout->addWidget(pushButton, 2, 0, 1, 1);
+        gridLayout->addWidget(toolButtonDrawCircle, 2, 0, 1, 1);
 
 
         verticalLayout->addWidget(groupBox_2);
@@ -214,7 +216,7 @@ public:
         comboBoxLineAlg->setItemText(1, QCoreApplication::translate("ImageViewerClass", "Bresenham", nullptr));
 
         toolButtonDrawLine->setText(QCoreApplication::translate("ImageViewerClass", "Line", nullptr));
-        pushButton->setText(QCoreApplication::translate("ImageViewerClass", "Circle", nullptr));
+        toolButtonDrawCircle->setText(QCoreApplication::translate("ImageViewerClass", "Circle", nullptr));
     } // retranslateUi
 
 };

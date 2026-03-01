@@ -1,6 +1,7 @@
-#include   "ViewerWidget.h"
+#include "ViewerWidget.h"
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 
 ViewerWidget::ViewerWidget(QSize imgSize, QWidget* parent)
 	: QWidget(parent)
@@ -254,9 +255,46 @@ void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
 	}
 }
 
-void drawCircleBresenham(QPoint center, QPoint end, QColor color)
+void ViewerWidget::drawCircleBresenham(QPoint center, QPoint end, QColor color)
 {
-	int radius = center.x() * center.x() + end
+	int radius = std::sqrt(std::powl(end.x() - center.x(), 2) + std::pow(end.y() - center.y(), 2)) + 0.5f;
+	int p = 1 - radius;
+
+	int twoX = 3;
+	int twoY = 2 * radius - 2;
+
+	int x = 0;
+	int y = radius;
+
+	while(x <= y)
+	{
+		drawCirclePoints(center.x(), center.y(), x, y, color);
+
+		if(p > 0)
+		{
+			p -= twoY;
+			//p += 2 * x - 2 * y + 5;
+			y--;
+			twoY -= 2;
+		}
+		//else
+			//p += 2 * x + 3;
+		p += twoX;
+		twoX += 2;
+		x++;
+	}
+}
+
+void ViewerWidget::drawCirclePoints(int xc, int yc, int x, int y, QColor color)
+{
+	setPixel(xc + x, yc + y, color);
+	setPixel(xc - x, yc + y, color);
+	setPixel(xc + x, yc - y, color);
+	setPixel(xc - x, yc - y, color);
+	setPixel(xc + y, yc + x, color);
+	setPixel(xc - y, yc + x, color);
+	setPixel(xc + y, yc - x, color);
+	setPixel(xc - y, yc - x, color);
 }
 
 //Slots
