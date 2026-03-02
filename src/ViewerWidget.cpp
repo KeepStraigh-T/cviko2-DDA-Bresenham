@@ -154,7 +154,7 @@ void ViewerWidget::clear()
 
 void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
 {
-	if((start.x() == end.x()) && (start.y() == end.y()))
+	if((start.x() == end.x()) && (start.y() == end.y()))					// dx/dy == 0/0
 		return;
 
 	int dx = end.x() - start.x();
@@ -216,7 +216,7 @@ void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
 			setPixel(x, y, color);
 		}
 	}
-	else
+	else																											// dy > dx -> m > 1 or m < -1
 	{
 		if(start.y() > end.y())																	// y0 > y1
 			ViewerWidget::swapPoints(start, end);
@@ -273,12 +273,9 @@ void ViewerWidget::drawCircleBresenham(QPoint center, QPoint end, QColor color)
 		if(p > 0)
 		{
 			p -= twoY;
-			//p += 2 * x - 2 * y + 5;
 			y--;
 			twoY -= 2;
 		}
-		//else
-			//p += 2 * x + 3;
 		p += twoX;
 		twoX += 2;
 		x++;

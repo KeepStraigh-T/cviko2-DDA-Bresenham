@@ -18,7 +18,31 @@ ImageViewer::ImageViewer(QWidget* parent)
 	globalColor = Qt::blue;
 	QString style_sheet = QString("background-color: %1;").arg(globalColor.name(QColor::HexRgb));
 	ui->pushButtonSetColor->setStyleSheet(style_sheet);
+
+	if(ui->comboBoxLineAlg->currentIndex() == 0)
+		ui->toolButtonDrawCircle->setEnabled(false);
+
+	QButtonGroup* drawGroup = new QButtonGroup(this);
+	drawGroup->setExclusive(true);
+
+	drawGroup->addButton(ui->toolButtonDrawLine);
+	drawGroup->addButton(ui->toolButtonDrawCircle);
+
 }
+
+void ImageViewer::on_comboBoxLineAlg_currentIndexChanged(int index)
+{
+	if (ui->comboBoxLineAlg->currentIndex() == 0)
+		ui->toolButtonDrawCircle->setEnabled(false);
+	else 
+		ui->toolButtonDrawCircle->setEnabled(true);
+}
+//
+//void ImageViewer::on_toolButtonDrawLine_clicked()
+//{
+//	if (ui->toolButtonDrawLine->isChecked())
+//
+//}
 
 // Event filters
 bool ImageViewer::eventFilter(QObject* obj, QEvent* event)

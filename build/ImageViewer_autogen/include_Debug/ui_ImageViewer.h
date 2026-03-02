@@ -65,7 +65,7 @@ public:
     {
         if (ImageViewerClass->objectName().isEmpty())
             ImageViewerClass->setObjectName("ImageViewerClass");
-        ImageViewerClass->resize(1052, 799);
+        ImageViewerClass->resize(1239, 967);
         actionOpen = new QAction(ImageViewerClass);
         actionOpen->setObjectName("actionOpen");
         actionSave_as = new QAction(ImageViewerClass);
@@ -89,7 +89,7 @@ public:
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName("scrollAreaWidgetContents");
         scrollAreaWidgetContents->setEnabled(true);
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 869, 724));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1056, 892));
         scrollArea->setWidget(scrollAreaWidgetContents);
 
         verticalLayout_3->addWidget(scrollArea);
@@ -97,7 +97,7 @@ public:
         ImageViewerClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(ImageViewerClass);
         menuBar->setObjectName("menuBar");
-        menuBar->setGeometry(QRect(0, 0, 1052, 22));
+        menuBar->setGeometry(QRect(0, 0, 1239, 22));
         menuFile = new QMenu(menuBar);
         menuFile->setObjectName("menuFile");
         menuImage = new QMenu(menuBar);
