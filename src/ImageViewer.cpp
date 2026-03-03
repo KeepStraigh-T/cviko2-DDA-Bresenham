@@ -27,6 +27,7 @@ ImageViewer::ImageViewer(QWidget* parent)
 
 	drawGroup->addButton(ui->toolButtonDrawLine);
 	drawGroup->addButton(ui->toolButtonDrawCircle);
+	drawGroup->addButton(ui->toolButtonDrawPolygon);
 
 }
 
@@ -63,6 +64,10 @@ bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event)
 	}
 
 	if (event->type() == QEvent::MouseButtonPress) {
+		QMouseEvent* e = static_cast<QMouseEvent*>(event);
+		while(e->button() == Qt::LeftButton && ui->toolButtonDrawPolygon->isChecked())
+			ViewerWidgetMouseButtonPress(w, event);
+
 		ViewerWidgetMouseButtonPress(w, event);
 	}
 	else if (event->type() == QEvent::MouseButtonRelease) {
@@ -86,6 +91,24 @@ bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event)
 void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
+
+	if (e->button() == Qt::LeftButton && ui->toolButtonDrawPolygon->isChecked())
+	{
+		if (w->getDrawLineActivated())
+		{
+			w->drawLine(vertices.back(), e->pos(), globalColor, ui->comboBoxLineAlg->currentIndex());
+			vertices.push_back(e->pos());
+			w->setDrawLineActivated(false);
+		}
+		else
+		{
+			vertices.push_back(e->pos());
+			w->setDrawLineActivated(true);
+			w->setPixel(vertices.back().x(), vertices.back().y(), globalColor);
+			w->update();
+		}
+	}
+
 	if (e->button() == Qt::LeftButton && ui->toolButtonDrawLine->isChecked())
 	{
 		if (w->getDrawLineActivated()) {

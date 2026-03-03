@@ -130,6 +130,7 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
 	}
 	update();
 
+
 	//Po implementovani drawLineDDA a drawLineBresenham treba vymazat
 	//QPainter painter(img);
 	//painter.setPen(QPen(color));

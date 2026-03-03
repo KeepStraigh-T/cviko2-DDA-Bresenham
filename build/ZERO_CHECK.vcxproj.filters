@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <CustomBuild Include="Q:\Qt-projects\PG-Cviko2-DDA-Bresenham\build\CMakeFiles\9f5a6467923d7e2bf64cecd414b04507\generate.stamp.rule">
+    <CustomBuild Include="D:\Projects\Yaroslav-Kepko\PG-cvik3\KeepStraigh-T\cviko2-DDA-Bresenham\build\CMakeFiles\86b774f8876f4a521ead792d41147819\generate.stamp.rule">
       <Filter>CMake Rules</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="CMake Rules">
-      <UniqueIdentifier>{0A9B50BB-0073-3DD3-86A0-FD7CAC0E4F3E}</UniqueIdentifier>
+      <UniqueIdentifier>{816B44E3-7B9E-3487-95F3-0BAB15CB61A8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

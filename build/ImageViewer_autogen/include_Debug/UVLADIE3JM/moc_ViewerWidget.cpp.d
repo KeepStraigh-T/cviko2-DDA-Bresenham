@@ -1,4 +1,4 @@
-Q:/Qt-projects/PG-Cviko2-DDA-Bresenham/build/ImageViewer_autogen/include_Debug/UVLADIE3JM/moc_ViewerWidget.cpp: Q:/Qt-projects/PG-Cviko2-DDA-Bresenham/src/ViewerWidget.h \
+D:/Projects/Yaroslav-Kepko/PG-cvik3/KeepStraigh-T/cviko2-DDA-Bresenham/build/ImageViewer_autogen/include_Debug/UVLADIE3JM/moc_ViewerWidget.cpp: D:/Projects/Yaroslav-Kepko/PG-cvik3/KeepStraigh-T/cviko2-DDA-Bresenham/src/ViewerWidget.h \
   C:/Qt/6.10.1/msvc2022_64/include/QtCore/QDeadlineTimer \
   C:/Qt/6.10.1/msvc2022_64/include/QtCore/QEvent \
   C:/Qt/6.10.1/msvc2022_64/include/QtCore/QHash \

@@ -55,10 +55,11 @@ public:
     QPushButton *pushButtonSetColor;
     QGroupBox *groupBox_2;
     QGridLayout *gridLayout;
-    QComboBox *comboBoxLineAlg;
     QToolButton *toolButtonDrawLine;
-    QSpacerItem *horizontalSpacer;
     QPushButton *toolButtonDrawCircle;
+    QSpacerItem *horizontalSpacer;
+    QComboBox *comboBoxLineAlg;
+    QPushButton *toolButtonDrawPolygon;
     QSpacerItem *verticalSpacer;
 
     void setupUi(QMainWindow *ImageViewerClass)
@@ -89,7 +90,7 @@ public:
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName("scrollAreaWidgetContents");
         scrollAreaWidgetContents->setEnabled(true);
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1056, 892));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1045, 887));
         scrollArea->setWidget(scrollAreaWidgetContents);
 
         verticalLayout_3->addWidget(scrollArea);
@@ -97,7 +98,7 @@ public:
         ImageViewerClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(ImageViewerClass);
         menuBar->setObjectName("menuBar");
-        menuBar->setGeometry(QRect(0, 0, 1239, 22));
+        menuBar->setGeometry(QRect(0, 0, 1239, 21));
         menuFile = new QMenu(menuBar);
         menuFile->setObjectName("menuFile");
         menuImage = new QMenu(menuBar);
@@ -137,22 +138,11 @@ public:
         gridLayout->setSpacing(6);
         gridLayout->setContentsMargins(11, 11, 11, 11);
         gridLayout->setObjectName("gridLayout");
-        comboBoxLineAlg = new QComboBox(groupBox_2);
-        comboBoxLineAlg->addItem(QString());
-        comboBoxLineAlg->addItem(QString());
-        comboBoxLineAlg->setObjectName("comboBoxLineAlg");
-
-        gridLayout->addWidget(comboBoxLineAlg, 0, 0, 1, 2);
-
         toolButtonDrawLine = new QToolButton(groupBox_2);
         toolButtonDrawLine->setObjectName("toolButtonDrawLine");
         toolButtonDrawLine->setCheckable(true);
 
         gridLayout->addWidget(toolButtonDrawLine, 1, 0, 1, 1);
-
-        horizontalSpacer = new QSpacerItem(40, 20, QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Minimum);
-
-        gridLayout->addItem(horizontalSpacer, 1, 1, 1, 1);
 
         toolButtonDrawCircle = new QPushButton(groupBox_2);
         toolButtonDrawCircle->setObjectName("toolButtonDrawCircle");
@@ -165,6 +155,23 @@ public:
         toolButtonDrawCircle->setCheckable(true);
 
         gridLayout->addWidget(toolButtonDrawCircle, 2, 0, 1, 1);
+
+        horizontalSpacer = new QSpacerItem(40, 20, QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Minimum);
+
+        gridLayout->addItem(horizontalSpacer, 1, 1, 1, 1);
+
+        comboBoxLineAlg = new QComboBox(groupBox_2);
+        comboBoxLineAlg->addItem(QString());
+        comboBoxLineAlg->addItem(QString());
+        comboBoxLineAlg->setObjectName("comboBoxLineAlg");
+
+        gridLayout->addWidget(comboBoxLineAlg, 0, 0, 1, 2);
+
+        toolButtonDrawPolygon = new QPushButton(groupBox_2);
+        toolButtonDrawPolygon->setObjectName("toolButtonDrawPolygon");
+        toolButtonDrawPolygon->setCheckable(true);
+
+        gridLayout->addWidget(toolButtonDrawPolygon, 3, 0, 1, 1);
 
 
         verticalLayout->addWidget(groupBox_2);
@@ -212,11 +219,12 @@ public:
         groupBox->setTitle(QCoreApplication::translate("ImageViewerClass", "Color", nullptr));
         pushButtonSetColor->setText(QString());
         groupBox_2->setTitle(QCoreApplication::translate("ImageViewerClass", "Draw", nullptr));
+        toolButtonDrawLine->setText(QCoreApplication::translate("ImageViewerClass", "Line", nullptr));
+        toolButtonDrawCircle->setText(QCoreApplication::translate("ImageViewerClass", "Circle", nullptr));
         comboBoxLineAlg->setItemText(0, QCoreApplication::translate("ImageViewerClass", "DDA", nullptr));
         comboBoxLineAlg->setItemText(1, QCoreApplication::translate("ImageViewerClass", "Bresenham", nullptr));
 
-        toolButtonDrawLine->setText(QCoreApplication::translate("ImageViewerClass", "Line", nullptr));
-        toolButtonDrawCircle->setText(QCoreApplication::translate("ImageViewerClass", "Circle", nullptr));
+        toolButtonDrawPolygon->setText(QCoreApplication::translate("ImageViewerClass", "Polygon", nullptr));
     } // retranslateUi
 
 };

@@ -16,6 +16,7 @@ private:
 	Ui::ImageViewerClass* ui;
 	ViewerWidget* vW;
 
+	QVector <QPoint> vertices;
 	QColor globalColor;
 	QSettings settings;
 	QMessageBox msgBox;
