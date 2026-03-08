@@ -1,3 +1,0 @@
-D:/Projects/Yaroslav-Kepko/PG-cvik3/KeepStraigh-T/cviko2-DDA-Bresenham/build/CMakeFiles/ImageViewer.dir
-D:/Projects/Yaroslav-Kepko/PG-cvik3/KeepStraigh-T/cviko2-DDA-Bresenham/build/CMakeFiles/ALL_BUILD.dir
-D:/Projects/Yaroslav-Kepko/PG-cvik3/KeepStraigh-T/cviko2-DDA-Bresenham/build/CMakeFiles/ZERO_CHECK.dir
