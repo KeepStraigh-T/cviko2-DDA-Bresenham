@@ -24,6 +24,7 @@ ViewerWidget::~ViewerWidget()
 void ViewerWidget::resizeWidget(QSize size)
 {
 	this->resize(size);
+
 	this->setMinimumSize(size);
 	this->setMaximumSize(size);
 }
@@ -150,8 +151,21 @@ void ViewerWidget::clear()
 {
 	if (!img) return;
 	img->fill(Qt::white);
+
+	if(!vertices.isEmpty())
+		vertices.clear();
+
+	drawLineActivated = false;
+
 	update();
 }
+
+void ViewerWidget::clearVertices()
+{
+	if(vertices.size() > 0)
+		vertices.clear();
+}
+
 
 void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
 {
@@ -295,6 +309,13 @@ void ViewerWidget::drawCirclePoints(int xc, int yc, int x, int y, QColor color)
 	setPixel(xc - y, yc - x, color);
 }
 
+void ViewerWidget::swapPoints(QPoint& start, QPoint& end)
+{
+	QPoint temp = start;
+	start = end;
+	end = temp;
+}
+
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)
 {
@@ -303,11 +324,4 @@ void ViewerWidget::paintEvent(QPaintEvent* event)
 
 	QRect area = event->rect();
 	painter.drawImage(area, *img, area);
-}
-
-void ViewerWidget::swapPoints(QPoint& start, QPoint& end)
-{
-	QPoint temp = start;
-	start = end;
-	end = temp;
 }

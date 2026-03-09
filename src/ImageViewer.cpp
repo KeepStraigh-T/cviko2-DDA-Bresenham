@@ -102,8 +102,8 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 		}
 		else
 		{
-			vertices.push_back(e->pos());
 			w->setDrawLineActivated(true);
+			vertices.push_back(e->pos());
 			w->setPixel(vertices.back().x(), vertices.back().y(), globalColor);
 			w->update();
 		}

@@ -6,6 +6,8 @@ private:
 	QSize areaSize = QSize(0, 0);
 	QImage* img = nullptr;
 	uchar* data = nullptr;
+	QVector <QPoint> vertices;
+
 
 	bool drawLineActivated = false;
 	QPoint drawLineBegin = QPoint(0, 0);
