@@ -10,7 +10,8 @@ private:
 	QVector <QPoint> vertices;
 
 
-	bool drawLineActivated = false;
+	bool drawActivated = false;
+
 	QPoint drawLineBegin = QPoint(0, 0);
 
 public:
@@ -35,15 +36,15 @@ public:
 	void drawCirclePoints(int xc, int yc, int x, int y, QColor color);
 	void setDrawLineBegin(QPoint begin) { drawLineBegin = begin; }
 	QPoint getDrawLineBegin() { return drawLineBegin; }
-	void setDrawLineActivated(bool state) { drawLineActivated = state; }
-	bool getDrawLineActivated() { return drawLineActivated; }
+	void setDrawActivated(bool state) { drawActivated = state; }
+	bool getDrawActivated() { return drawActivated; }
 	static void swapPoints(QPoint& start, QPoint& end);
 
 	void clearVertices();
 	void push_backVertex(QPoint point);
 	QPoint backVertex();
 	QPoint firstVertex();
-
+	qsizetype sizeVertex();
 
 
 	//Get/Set functions

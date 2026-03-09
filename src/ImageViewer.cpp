@@ -7,8 +7,12 @@ ImageViewer::ImageViewer(QWidget* parent)
 	vW = new ViewerWidget(QSize(500, 500), ui->scrollArea);
 	ui->scrollArea->setWidget(vW);
 
+	QSizePolicy policy = ui->scrollArea->sizePolicy();
+	policy.setVerticalStretch(1);
+	policy.setHorizontalStretch(1);
+
 	ui->scrollArea->setBackgroundRole(QPalette::Dark);
-	ui->scrollArea->setWidgetResizable(false);
+	ui->scrollArea->setWidgetResizable(true);
 	ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 	ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
@@ -22,10 +26,9 @@ ImageViewer::ImageViewer(QWidget* parent)
 	if(ui->comboBoxLineAlg->currentIndex() == 0)
 		ui->toolButtonDrawCircle->setEnabled(false);
 
-	QButtonGroup* drawGroup = new QButtonGroup(this);
+	drawGroup = new QButtonGroup(this);
 	drawGroup->setExclusive(true);
 
-	drawGroup->addButton(ui->toolButtonDrawLine);
 	drawGroup->addButton(ui->toolButtonDrawCircle);
 	drawGroup->addButton(ui->toolButtonDrawPolygon);
 
@@ -33,17 +36,17 @@ ImageViewer::ImageViewer(QWidget* parent)
 
 void ImageViewer::on_comboBoxLineAlg_currentIndexChanged(int index)
 {
-	if (ui->comboBoxLineAlg->currentIndex() == 0)
+	if(ui->comboBoxLineAlg->currentIndex() != 1)
+	{
 		ui->toolButtonDrawCircle->setEnabled(false);
-	else 
+		ui->toolButtonDrawCircle->setChecked(false);
+	}
+	else
+	{
 		ui->toolButtonDrawCircle->setEnabled(true);
+		ui->toolButtonDrawCircle->setChecked(false);
+	}
 }
-//
-//void ImageViewer::on_toolButtonDrawLine_clicked()
-//{
-//	if (ui->toolButtonDrawLine->isChecked())
-//
-//}
 
 // Event filters
 bool ImageViewer::eventFilter(QObject* obj, QEvent* event)
@@ -84,60 +87,47 @@ bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event)
 
 	return QObject::eventFilter(obj, event);
 }
+
 void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
 
-	if (e->button() == Qt::LeftButton && ui->toolButtonDrawPolygon->isChecked())
+	if(e->button() == Qt::LeftButton && drawGroup->checkedId() != -1) // no buttons clicked in the ButtonGroup
 	{
-		if (w->getDrawLineActivated())
-		{
-			w->drawLine(w->backVertex(), e->pos(), globalColor, ui->comboBoxLineAlg->currentIndex());
-			w->push_backVertex(e->pos());
+		if(w->getDrawActivated())
+		{	// Draw circle
+			if(ui->toolButtonDrawCircle->isChecked() && ui->comboBoxLineAlg->currentIndex() != 0)
+			{
+				w->drawCircle(w->getDrawLineBegin(), e->pos(), globalColor);
+				w->setDrawActivated(false);
+
+			}
+			// Draw line/polygone
+			else if(ui->toolButtonDrawPolygon->isChecked())
+			{
+				w->drawLine(w->backVertex(), e->pos(), globalColor, ui->comboBoxLineAlg->currentIndex()); 
+				w->push_backVertex(e->pos());
+			}
 		}
 		else
 		{
 			w->clear();
-			w->setDrawLineActivated(true);
+			w->setDrawActivated(true);
+			w->setPixel(e->pos().x(), e->pos().y(), globalColor);
+			w->setDrawLineBegin(e->pos());
 			w->push_backVertex(e->pos());
-			w->setPixel(e->pos().x(), e->pos().y(), globalColor);
 			w->update();
 		}
 	}
 
-	else if (e->button() == Qt::RightButton && ui->toolButtonDrawPolygon->isChecked())
+	else if(e->button() == Qt::RightButton)
 	{
-		if (w->getDrawLineActivated()) {
-			w->setDrawLineActivated(false);
+		w->setDrawActivated(false);
 
-			w->drawLine(w->backVertex(), w->firstVertex(), ui->comboBoxLineAlg->currentIndex());
-		}
-	}
+		if(w->sizeVertex() == 2) // Finish drawing line
+			return;
 
-	if (e->button() == Qt::LeftButton && ui->toolButtonDrawLine->isChecked())
-	{
-		if (w->getDrawLineActivated()) {
-			w->drawLine(w->getDrawLineBegin(), e->pos(), globalColor, ui->comboBoxLineAlg->currentIndex());
-			w->setDrawLineActivated(false);
-		}
-		else {
-			w->setDrawLineBegin(e->pos());
-			w->setDrawLineActivated(true);
-			w->setPixel(e->pos().x(), e->pos().y(), globalColor);
-			w->update();
-		}
-	}
-	else if((e->button() == Qt::LeftButton) && ui->toolButtonDrawCircle->isChecked() && (ui->comboBoxLineAlg->currentIndex() == 1))
-	{
-		if (w->getDrawLineActivated()) {
-			w->drawCircle(w->getDrawLineBegin(), e->pos(), globalColor);
-			w->setDrawLineActivated(false);
-		}
-		else {
-			w->setDrawLineBegin(e->pos());
-			w->setDrawLineActivated(true);
-			w->update();
-		}		
+		w->drawLine(w->backVertex(), w->firstVertex(), globalColor, ui->comboBoxLineAlg->currentIndex()); // Finish drawing polygon
 	}
 }
 

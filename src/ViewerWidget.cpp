@@ -130,13 +130,6 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
 		drawLineBresenham(start, end, color);
 	}
 	update();
-
-
-	//Po implementovani drawLineDDA a drawLineBresenham treba vymazat
-	//QPainter painter(img);
-	//painter.setPen(QPen(color));
-	//painter.drawLine(start, end);
-	//update();
 }
 
 void ViewerWidget::drawCircle(QPoint center, QPoint end, QColor color)
@@ -155,7 +148,7 @@ void ViewerWidget::clear()
 	if(!vertices.isEmpty())
 		vertices.clear();
 
-	drawLineActivated = false;
+	drawActivated = false;
 
 	update();
 }
@@ -186,6 +179,8 @@ QPoint ViewerWidget::firstVertex()
 	else
 		return QPoint(0, 0);
 }
+
+qsizetype ViewerWidget::sizeVertex() { return vertices.size(); }
 
 
 void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)

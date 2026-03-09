@@ -20,6 +20,7 @@ private:
 	QSettings settings;
 	QMessageBox msgBox;
 
+	QButtonGroup* drawGroup;
 	//Event filters
 	bool eventFilter(QObject* obj, QEvent* event);
 
