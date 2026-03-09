@@ -6,6 +6,7 @@ private:
 	QSize areaSize = QSize(0, 0);
 	QImage* img = nullptr;
 	uchar* data = nullptr;
+
 	QVector <QPoint> vertices;
 
 
@@ -37,6 +38,13 @@ public:
 	void setDrawLineActivated(bool state) { drawLineActivated = state; }
 	bool getDrawLineActivated() { return drawLineActivated; }
 	static void swapPoints(QPoint& start, QPoint& end);
+
+	void clearVertices();
+	void push_backVertex(QPoint point);
+	QPoint backVertex();
+	QPoint firstVertex();
+
+
 
 	//Get/Set functions
 	uchar* getData() { return data; }

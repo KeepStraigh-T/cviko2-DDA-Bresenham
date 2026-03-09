@@ -166,6 +166,27 @@ void ViewerWidget::clearVertices()
 		vertices.clear();
 }
 
+void ViewerWidget::push_backVertex(QPoint point)
+{
+	vertices.push_back(point);
+}
+
+QPoint ViewerWidget::backVertex()
+{
+	if (vertices.size() > 0)
+		return vertices.back();
+	else
+		return QPoint(0, 0);
+}
+
+QPoint ViewerWidget::firstVertex()
+{
+	if (vertices.size() > 0)
+		return vertices.front();
+	else
+		return QPoint(0, 0);
+}
+
 
 void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
 {
