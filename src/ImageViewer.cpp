@@ -237,3 +237,16 @@ void ImageViewer::on_pushButtonSetColor_clicked()
 		globalColor = newColor;
 	}
 }
+
+void ImageViewer::on_pushButtonRotate_clicked()
+{ 
+	if (vW->sizeVertex() == 0 || vW->getDrawActivated() || std::fpclassify(ui->rotateAngleSpinBox->value()) == FP_ZERO)
+	{
+		return;
+	}
+
+	for (qsizetype i = 1; i < vW->sizeVertex(); i++)
+	{
+		vW->rotate(ui->rotateAngleSpinBox->value());
+	}
+}

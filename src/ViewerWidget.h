@@ -1,5 +1,10 @@
 #pragma once
 #include <QtWidgets>
+#include <cmath>
+
+//using std::cos;
+//using std::sin;
+
 class ViewerWidget :public QWidget {
 	Q_OBJECT
 private:
@@ -34,6 +39,10 @@ public:
 	void drawLine(QPoint start, QPoint end, QColor color, int algType = 0);
 	void drawCircle(QPoint center, QPoint end, QColor color);
 	void drawCirclePoints(int xc, int yc, int x, int y, QColor color);
+
+	//Transformations
+	void rotate(double angle);
+
 	void setDrawLineBegin(QPoint begin) { drawLineBegin = begin; }
 	QPoint getDrawLineBegin() { return drawLineBegin; }
 	void setDrawActivated(bool state) { drawActivated = state; }
@@ -45,6 +54,7 @@ public:
 	QPoint backVertex();
 	QPoint firstVertex();
 	qsizetype sizeVertex();
+	QPoint* operator[](qsizetype idx);
 
 
 	//Get/Set functions

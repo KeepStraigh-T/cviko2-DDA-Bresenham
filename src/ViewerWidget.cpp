@@ -332,6 +332,27 @@ void ViewerWidget::swapPoints(QPoint& start, QPoint& end)
 	end = temp;
 }
 
+//QPoint* ViewerWidget::operator[](qsizetype idx)
+//{
+//	if (vertices.size() == 0)
+//		return NULL;
+//
+//	return &vertices[idx];
+//}
+
+
+//Transformations
+void ViewerWidget::rotate(double angle)
+{
+	for (qsizetype i = 1; i < vertices.size(); i++)
+	{
+		vertices[i].setX((vertices[i].x() - vertices[0].x()) * cos(angle) - (vertices[i].y() - vertices[0].y()) * sin(angle) + vertices[i].x());
+		vertices[i].setY((vertices[i].x() - vertices[0].x()) * sin(angle) + (vertices[i].y() - vertices[0].y()) * cos(angle) + vertices[i].y());
+	}
+}
+
+
+
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)
 {
