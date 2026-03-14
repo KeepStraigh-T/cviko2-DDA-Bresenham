@@ -342,15 +342,54 @@ void ViewerWidget::swapPoints(QPoint& start, QPoint& end)
 
 
 //Transformations
-void ViewerWidget::rotate(double angle)
+void ViewerWidget::rotate(double angle, QColor color, int algType)
 {
+	if(!img)
+		return;
+
+	img->fill(Qt::white);
+
+	double rad = angle * M_PI / 180.0;
+
 	for (qsizetype i = 1; i < vertices.size(); i++)
 	{
-		vertices[i].setX((vertices[i].x() - vertices[0].x()) * cos(angle) - (vertices[i].y() - vertices[0].y()) * sin(angle) + vertices[i].x());
-		vertices[i].setY((vertices[i].x() - vertices[0].x()) * sin(angle) + (vertices[i].y() - vertices[0].y()) * cos(angle) + vertices[i].y());
+		int x = ( vertices[i].x() - vertices[0].x() ) * cos(rad) - ( vertices[i].y() - vertices[0].y() ) * sin(rad) + vertices[0].x() + 0.5;
+		int y = ( vertices[i].x() - vertices[0].x() ) * sin(rad) + ( vertices[i].y() - vertices[0].y() ) * cos(rad) + vertices[0].y() + 0.5;
+		vertices[i].setX(x);
+		vertices[i].setY(y);
+
+		drawLine(vertices[i - 1], vertices[i], color, algType);
 	}
+
+	drawLine(vertices.back(), vertices.front(), color, algType);
 }
 
+void ViewerWidget::scale(double factorX, double factorY, QColor color, int algType)
+{
+	if(isEmpty())
+		return;
+
+	img->fill(Qt::white);
+
+	QVector <QPoint>  scaledVer {0};
+	scaledVer.push_back(vertices[0]);
+
+	if(factorX > 0.0 && factorY > 0.0)
+	{
+		for (qsizetype i = 1; i < vertices.size(); i++)
+		{
+			QPoint ver;
+			int x = (vertices[i].x() - vertices[0].x()) * factorX + vertices[0].x() + 0.5;
+			int y = (vertices[i].y() - vertices[0].y()) * factorY + vertices[0].y() + 0.5;
+			ver.setX(x);
+			ver.setY(y);
+			scaledVer.push_back(ver);
+
+			drawLine(scaledVer[i - 1], scaledVer[i], color, algType);
+		}
+		drawLine(scaledVer.back(), scaledVer.front(), color, algType);
+	}
+}
 
 
 //Slots

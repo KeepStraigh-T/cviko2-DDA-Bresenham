@@ -45,10 +45,13 @@ private slots:
 	void on_actionSave_as_triggered();
 	void on_actionClear_triggered();
 	void on_actionExit_triggered();
-	void on_comboBoxLineAlg_currentIndexChanged(int index);
+	void on_comboBoxFigure_currentIndexChanged(int index);
 	void on_pushButtonRotate_clicked();
-	//void on_toolButtonDrawLine_clicked();
+	void on_pushButtonScale_clicked();
+
+
 
 	//Tools slots
 	void on_pushButtonSetColor_clicked();
+
 };

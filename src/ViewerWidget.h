@@ -1,6 +1,7 @@
 #pragma once
 #include <QtWidgets>
 #include <cmath>
+#include <QtNumeric>
 
 //using std::cos;
 //using std::sin;
@@ -13,7 +14,6 @@ private:
 	uchar* data = nullptr;
 
 	QVector <QPoint> vertices;
-
 
 	bool drawActivated = false;
 
@@ -40,14 +40,17 @@ public:
 	void drawCircle(QPoint center, QPoint end, QColor color);
 	void drawCirclePoints(int xc, int yc, int x, int y, QColor color);
 
-	//Transformations
-	void rotate(double angle);
+
 
 	void setDrawLineBegin(QPoint begin) { drawLineBegin = begin; }
 	QPoint getDrawLineBegin() { return drawLineBegin; }
 	void setDrawActivated(bool state) { drawActivated = state; }
 	bool getDrawActivated() { return drawActivated; }
 	static void swapPoints(QPoint& start, QPoint& end);
+
+		//Transformations
+	void rotate(double angle, QColor color, int algType);
+	void scale(double factorX, double factorY, QColor color, int algType);
 
 	void clearVertices();
 	void push_backVertex(QPoint point);

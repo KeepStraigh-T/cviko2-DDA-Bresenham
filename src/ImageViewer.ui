@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>995</width>
-    <height>849</height>
+    <width>991</width>
+    <height>841</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,6 +20,12 @@
       <property name="enabled">
        <bool>true</bool>
       </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>255</horstretch>
+        <verstretch>255</verstretch>
+       </sizepolicy>
+      </property>
       <property name="widgetResizable">
        <bool>true</bool>
       </property>
@@ -31,8 +37,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>676</width>
-         <height>769</height>
+         <width>643</width>
+         <height>766</height>
         </rect>
        </property>
       </widget>
@@ -45,8 +51,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>995</width>
-     <height>21</height>
+     <width>991</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -107,8 +113,35 @@
         <string>Draw</string>
        </property>
        <layout class="QGridLayout" name="gridLayout">
+        <item row="3" column="1">
+         <widget class="QPushButton" name="pushButton">
+          <property name="text">
+           <string>Draw</string>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="0" colspan="3">
+         <widget class="QComboBox" name="comboBoxFigure">
+          <item>
+           <property name="text">
+            <string>Polygon</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Circle</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="1" column="0" colspan="3">
          <widget class="QComboBox" name="comboBoxLineAlg">
+          <property name="editable">
+           <bool>false</bool>
+          </property>
+          <property name="currentText">
+           <string>DDA</string>
+          </property>
           <item>
            <property name="text">
             <string>DDA</string>
@@ -121,26 +154,10 @@
           </item>
          </widget>
         </item>
-        <item row="1" column="0">
-         <widget class="QPushButton" name="toolButtonDrawCircle">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
+        <item row="3" column="0">
+         <widget class="QPushButton" name="pushButton_2">
           <property name="text">
-           <string>Circle</string>
-          </property>
-          <property name="checkable">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QPushButton" name="toolButtonDrawPolygon">
-          <property name="text">
-           <string>Polygon</string>
-          </property>
-          <property name="checkable">
-           <bool>true</bool>
+           <string>Clear</string>
           </property>
          </widget>
         </item>
@@ -152,15 +169,41 @@
        <property name="title">
         <string>Transformations</string>
        </property>
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="QPushButton" name="pushButtonRotate">
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="1" column="1">
+         <widget class="QLabel" name="label">
           <property name="text">
-           <string>Rotate</string>
+           <string>factor(x, y)</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
          </widget>
         </item>
-        <item>
+        <item row="1" column="2">
+         <widget class="QDoubleSpinBox" name="xFactorSpinBox">
+          <property name="minimum">
+           <double>-10.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>10.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.500000000000000</double>
+          </property>
+          <property name="value">
+           <double>1.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QPushButton" name="pushButtonScale">
+          <property name="text">
+           <string>Scale</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
          <widget class="QLabel" name="labelAngle">
           <property name="text">
            <string>angle(deg)</string>
@@ -170,8 +213,38 @@
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QDoubleSpinBox" name="rotateAngleSpinBox"/>
+        <item row="0" column="0">
+         <widget class="QPushButton" name="pushButtonRotate">
+          <property name="text">
+           <string>Rotate</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2">
+         <widget class="QDoubleSpinBox" name="rotateAngleSpinBox">
+          <property name="minimum">
+           <double>-360.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>360.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="3">
+         <widget class="QDoubleSpinBox" name="yFactorSpinBox">
+          <property name="minimum">
+           <double>-10.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>10.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.500000000000000</double>
+          </property>
+          <property name="value">
+           <double>1.000000000000000</double>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>

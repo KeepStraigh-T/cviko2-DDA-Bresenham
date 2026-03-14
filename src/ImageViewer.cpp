@@ -4,7 +4,7 @@ ImageViewer::ImageViewer(QWidget* parent)
 	: QMainWindow(parent), ui(new Ui::ImageViewerClass)
 {
 	ui->setupUi(this);
-	vW = new ViewerWidget(QSize(500, 500), ui->scrollArea);
+	vW = new ViewerWidget(this->size(), ui->scrollArea);
 	ui->scrollArea->setWidget(vW);
 
 	QSizePolicy policy = ui->scrollArea->sizePolicy();
@@ -19,34 +19,11 @@ ImageViewer::ImageViewer(QWidget* parent)
 	vW->setObjectName("ViewerWidget");
 	vW->installEventFilter(this);
 
-	globalColor = Qt::blue;
+	globalColor = Qt::red;
 	QString style_sheet = QString("background-color: %1;").arg(globalColor.name(QColor::HexRgb));
 	ui->pushButtonSetColor->setStyleSheet(style_sheet);
-
-	if(ui->comboBoxLineAlg->currentIndex() == 0)
-		ui->toolButtonDrawCircle->setEnabled(false);
-
-	drawGroup = new QButtonGroup(this);
-	drawGroup->setExclusive(true);
-
-	drawGroup->addButton(ui->toolButtonDrawCircle);
-	drawGroup->addButton(ui->toolButtonDrawPolygon);
-
 }
 
-void ImageViewer::on_comboBoxLineAlg_currentIndexChanged(int index)
-{
-	if(ui->comboBoxLineAlg->currentIndex() != 1)
-	{
-		ui->toolButtonDrawCircle->setEnabled(false);
-		ui->toolButtonDrawCircle->setChecked(false);
-	}
-	else
-	{
-		ui->toolButtonDrawCircle->setEnabled(true);
-		ui->toolButtonDrawCircle->setChecked(false);
-	}
-}
 
 // Event filters
 bool ImageViewer::eventFilter(QObject* obj, QEvent* event)
@@ -92,20 +69,20 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
 
-	if(e->button() == Qt::LeftButton && drawGroup->checkedId() != -1) // no buttons clicked in the ButtonGroup
+	if(e->button() == Qt::LeftButton)
 	{
 		if(w->getDrawActivated())
 		{	// Draw circle
-			if(ui->toolButtonDrawCircle->isChecked() && ui->comboBoxLineAlg->currentIndex() != 0)
+			if(ui->comboBoxFigure->currentIndex() == 1)
 			{
+				w->clear();
 				w->drawCircle(w->getDrawLineBegin(), e->pos(), globalColor);
 				w->setDrawActivated(false);
-
 			}
 			// Draw line/polygone
-			else if(ui->toolButtonDrawPolygon->isChecked())
+			else if(ui->comboBoxFigure->currentIndex() == 0)
 			{
-				w->drawLine(w->backVertex(), e->pos(), globalColor, ui->comboBoxLineAlg->currentIndex()); 
+				w->drawLine(w->backVertex(), e->pos(), globalColor, ui->comboBoxLineAlg->currentIndex());
 				w->push_backVertex(e->pos());
 			}
 		}
@@ -240,13 +217,26 @@ void ImageViewer::on_pushButtonSetColor_clicked()
 
 void ImageViewer::on_pushButtonRotate_clicked()
 { 
-	if (vW->sizeVertex() == 0 || vW->getDrawActivated() || std::fpclassify(ui->rotateAngleSpinBox->value()) == FP_ZERO)
-	{
+	if (vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
 		return;
-	}
 
-	for (qsizetype i = 1; i < vW->sizeVertex(); i++)
-	{
-		vW->rotate(ui->rotateAngleSpinBox->value());
-	}
+	vW->rotate(ui->rotateAngleSpinBox->value(), globalColor, ui->comboBoxLineAlg->currentIndex());
 }
+
+void ImageViewer::on_pushButtonScale_clicked()
+{
+	if (vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
+		return;
+
+	vW->scale(ui->xFactorSpinBox->value(), ui->yFactorSpinBox->value(), globalColor, ui->comboBoxLineAlg->currentIndex());
+}
+
+
+void ImageViewer::on_comboBoxFigure_currentIndexChanged(int index)
+{
+	if(index == 1) // Circle in comboBoxFigure
+		ui->comboBoxLineAlg->setEnabled(false);
+	else
+		ui->comboBoxLineAlg->setEnabled(true);
+}
+
