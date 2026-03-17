@@ -46,11 +46,14 @@ public:
 	QPoint getDrawLineBegin() { return drawLineBegin; }
 	void setDrawActivated(bool state) { drawActivated = state; }
 	bool getDrawActivated() { return drawActivated; }
-	static void swapPoints(QPoint& start, QPoint& end);
+	void swapPoints(QPoint& start, QPoint& end);
 
 		//Transformations
 	void rotate(double angle, QColor color, int algType);
 	void scale(double factorX, double factorY, QColor color, int algType);
+	void shear(double factorX, QColor color, int algType);
+	void symmetry(QColor color, int algType);
+
 
 	void clearVertices();
 	void push_backVertex(QPoint point);

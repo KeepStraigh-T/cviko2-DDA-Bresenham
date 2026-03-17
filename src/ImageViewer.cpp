@@ -11,7 +11,7 @@ ImageViewer::ImageViewer(QWidget* parent)
 	policy.setVerticalStretch(1);
 	policy.setHorizontalStretch(1);
 
-	ui->scrollArea->setBackgroundRole(QPalette::Dark);
+	ui->scrollArea->setBackgroundRole(QPalette::Midlight);
 	ui->scrollArea->setWidgetResizable(true);
 	ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 	ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
@@ -228,7 +228,24 @@ void ImageViewer::on_pushButtonScale_clicked()
 	if (vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
 		return;
 
-	vW->scale(ui->xFactorSpinBox->value(), ui->yFactorSpinBox->value(), globalColor, ui->comboBoxLineAlg->currentIndex());
+	vW->scale(ui->xFactorScaleSpinBox->value(), ui->yFactorScaleSpinBox->value(), globalColor, ui->comboBoxLineAlg->currentIndex());
+}
+
+void ImageViewer::on_pushButtonShear_clicked()
+{
+	if (vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
+		return;
+
+	vW->shear(ui->shearSpinBox->value(), globalColor, ui->comboBoxLineAlg->currentIndex());
+}
+
+void ImageViewer::on_pushButtonSymmetry_clicked()
+{
+	if (vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
+		return;
+
+	vW->symmetry(globalColor, ui->comboBoxLineAlg->currentIndex());
+
 }
 
 

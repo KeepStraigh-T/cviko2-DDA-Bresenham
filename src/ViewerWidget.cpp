@@ -213,7 +213,7 @@ void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
 	if(qAbs(end.y() - start.y()) < qAbs(end.x() - start.x()))			// dy < dx -> 0<m<1 or -1<m<0
 	{
 		if(start.x() > end.x())																			// x0 > x1
-			ViewerWidget::swapPoints(start, end);
+			swapPoints(start, end);
 
 		int dx = end.x() - start.x();
 		int dy = end.y() - start.y();
@@ -250,7 +250,7 @@ void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
 	else																											// dy > dx -> m > 1 or m < -1
 	{
 		if(start.y() > end.y())																	// y0 > y1
-			ViewerWidget::swapPoints(start, end);
+			swapPoints(start, end);
 
 		int dx = end.x() - start.x();
 		int dy = end.y() - start.y();
@@ -282,7 +282,7 @@ void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
 				p += k1;
 
 			setPixel(x, y, color);
-		}	
+		}
 	}
 }
 
@@ -332,15 +332,6 @@ void ViewerWidget::swapPoints(QPoint& start, QPoint& end)
 	end = temp;
 }
 
-//QPoint* ViewerWidget::operator[](qsizetype idx)
-//{
-//	if (vertices.size() == 0)
-//		return NULL;
-//
-//	return &vertices[idx];
-//}
-
-
 //Transformations
 void ViewerWidget::rotate(double angle, QColor color, int algType)
 {
@@ -351,10 +342,10 @@ void ViewerWidget::rotate(double angle, QColor color, int algType)
 
 	double rad = angle * M_PI / 180.0;
 
-	for (qsizetype i = 1; i < vertices.size(); i++)
+	for(qsizetype i = 1; i < vertices.size(); i++)
 	{
-		int x = ( vertices[i].x() - vertices[0].x() ) * cos(rad) - ( vertices[i].y() - vertices[0].y() ) * sin(rad) + vertices[0].x() + 0.5;
-		int y = ( vertices[i].x() - vertices[0].x() ) * sin(rad) + ( vertices[i].y() - vertices[0].y() ) * cos(rad) + vertices[0].y() + 0.5;
+		int x = (vertices[i].x() - vertices[0].x()) * cos(rad) - (vertices[i].y() - vertices[0].y()) * sin(rad) + vertices[0].x() + 0.5;
+		int y = (vertices[i].x() - vertices[0].x()) * sin(rad) + (vertices[i].y() - vertices[0].y()) * cos(rad) + vertices[0].y() + 0.5;
 		vertices[i].setX(x);
 		vertices[i].setY(y);
 
@@ -371,26 +362,102 @@ void ViewerWidget::scale(double factorX, double factorY, QColor color, int algTy
 
 	img->fill(Qt::white);
 
-	QVector <QPoint>  scaledVer {0};
+	QVector <QPoint>  scaledVer{0};
 	scaledVer.push_back(vertices[0]);
 
-	if(factorX > 0.0 && factorY > 0.0)
+	for(qsizetype i = 1; i < vertices.size(); i++)
 	{
-		for (qsizetype i = 1; i < vertices.size(); i++)
-		{
-			QPoint ver;
-			int x = (vertices[i].x() - vertices[0].x()) * factorX + vertices[0].x() + 0.5;
-			int y = (vertices[i].y() - vertices[0].y()) * factorY + vertices[0].y() + 0.5;
-			ver.setX(x);
-			ver.setY(y);
-			scaledVer.push_back(ver);
+		QPoint ver;
+		int x = (vertices[i].x() - vertices[0].x()) * factorX + vertices[0].x() + 0.5;
+		int y = (vertices[i].y() - vertices[0].y()) * factorY + vertices[0].y() + 0.5;
+		ver.setX(x);
+		ver.setY(y);
+		scaledVer.push_back(ver);
 
-			drawLine(scaledVer[i - 1], scaledVer[i], color, algType);
-		}
-		drawLine(scaledVer.back(), scaledVer.front(), color, algType);
+		drawLine(scaledVer[i - 1], scaledVer[i], color, algType);
 	}
+	drawLine(scaledVer.back(), scaledVer.front(), color, algType);
 }
 
+void ViewerWidget::shear(double factorX, QColor color, int algType)
+{
+	if(isEmpty())
+		return;
+
+	img->fill(Qt::white);
+
+	QVector <QPoint>  shearedVer {0};
+	shearedVer.push_back(vertices[0]);
+
+	for(qsizetype i = 1; i < vertices.size(); i++)
+	{
+		QPoint vertx;
+		int x = (vertices[i].x() - vertices[0].x()) + factorX * vertices[i].y() + vertices[0].x() + 0.5;
+		vertx.setX(x);
+		vertx.setY(vertices[i].y());
+		shearedVer.push_back(vertx);
+		drawLine(shearedVer[i - 1], shearedVer[i], color, algType);
+	}
+	drawLine(shearedVer.back(), shearedVer.front(), color, algType);
+}
+
+void ViewerWidget::symmetry(QColor color, int algType)
+{
+	if(isEmpty())
+		return;
+
+	img->fill(Qt::white);
+
+	int lineVetricesAmount = 2;
+	if(vertices.size() > lineVetricesAmount) // symmetry of polygon
+	{
+		drawLine(vertices[0], vertices[1], color, algType);
+
+		int axisVektorX = vertices[1].x() - vertices[0].x();    //  = b = -u
+		int axisVektorY = vertices[1].y() - vertices[0].y();    //  = a = v
+		int a = axisVektorY;	// x value of normal
+		int b = -axisVektorX;	// y value of normal
+		int c = -a * vertices[0].x() - b * vertices[0].y();
+
+		for(qsizetype polyVertexIdx = 2; polyVertexIdx < vertices.size(); polyVertexIdx++)
+		{
+			int x = vertices[polyVertexIdx].x() - 2 * a * ( (a * vertices[polyVertexIdx].x() + b * vertices[polyVertexIdx].y() + c) / (double)(a * a + b * b) ) + 0.5;
+			int y = vertices[polyVertexIdx].y() - 2 * b * ( (a * vertices[polyVertexIdx].x() + b * vertices[polyVertexIdx].y() + c) / (double)(a * a + b * b) ) + 0.5;
+			vertices[polyVertexIdx].setX(x);
+			vertices[polyVertexIdx].setY(y);
+
+			// connect current modified and previous vertices
+			drawLine(vertices[polyVertexIdx - 1], vertices[polyVertexIdx], color, algType);
+		}
+		drawLine(vertices.front(), vertices.back(), color, algType); // connect first and last vertices
+	}
+	else if(vertices.size() == lineVetricesAmount) // symmetry of line segment
+	{
+		// symmetry axis is parallel to Oy
+		if(qAbs(vertices.back().x() - vertices.front().x()) > qAbs(vertices.back().y() - vertices.front().y()))				// dy < dx
+		{
+			int axisVektorX = img->width();
+			int b = -axisVektorX;	// y value of normal
+			int c = -b * vertices[0].y();
+
+			int y = vertices[1].y() - 2 * b * ((b * vertices[1].y() + c) / (double) (b * b)) + 0.5;
+			vertices[1].setY(y);
+
+			drawLine(vertices.front(), vertices.back(), color, algType);
+		}
+		else
+		{
+			int axisVektorY = img->height();
+			int a = axisVektorY;
+			int c = -a * vertices[0].x();
+
+			int x = vertices[1].x() - 2 * a * ((a * vertices[1].x() + c) / (double) (a * a)) + 0.5;
+			vertices[1].setX(x);
+
+			drawLine(vertices.front(), vertices.back(), color, algType);
+		}
+	}
+}
 
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)
@@ -401,3 +468,4 @@ void ViewerWidget::paintEvent(QPaintEvent* event)
 	QRect area = event->rect();
 	painter.drawImage(area, *img, area);
 }
+

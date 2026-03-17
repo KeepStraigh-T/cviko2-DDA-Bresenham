@@ -48,10 +48,12 @@ private slots:
 	void on_comboBoxFigure_currentIndexChanged(int index);
 	void on_pushButtonRotate_clicked();
 	void on_pushButtonScale_clicked();
+	void on_pushButtonShear_clicked();
+	void on_pushButtonSymmetry_clicked();
+	void on_pushButtonClearr_clicked();
 
-
+	 
 
 	//Tools slots
 	void on_pushButtonSetColor_clicked();
-
 };
