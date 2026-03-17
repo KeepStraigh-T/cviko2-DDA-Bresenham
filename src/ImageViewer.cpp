@@ -71,6 +71,14 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 
 	if(e->button() == Qt::LeftButton)
 	{
+		// Disable ui
+		ui->pushButtonSetColor->setEnabled(false);
+		ui->comboBoxFigure->setEnabled(false);
+		ui->comboBoxLineAlg->setEnabled(false);
+		ui->pushButtonClear->setEnabled(false);
+		ui->actionClear->setEnabled(false);
+		ui->groupBox_3->setEnabled(false);
+
 		if(w->getDrawActivated())
 		{	// Draw circle
 			if(ui->comboBoxFigure->currentIndex() == 1)
@@ -99,10 +107,22 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 
 	else if(e->button() == Qt::RightButton)
 	{
-		w->setDrawActivated(false);
+		// Enable ui
+		if (w->getDrawActivated()) 
+		{
+			w->setDrawActivated(false);
+			ui->pushButtonSetColor->setEnabled(true);
+			ui->comboBoxFigure->setEnabled(true);
+			ui->comboBoxLineAlg->setEnabled(true);
+			ui->pushButtonClear->setEnabled(true);
+			ui->actionClear->setEnabled(true);
+			ui->groupBox_3->setEnabled(true);
+		}
 
 		if(w->sizeVertex() == 2) // Finish drawing line
 			return;
+
+		vW->initTransfVert(); // initialize transformed vertices with original
 
 		w->drawLine(w->backVertex(), w->firstVertex(), globalColor, ui->comboBoxLineAlg->currentIndex()); // Finish drawing polygon
 	}
@@ -196,10 +216,19 @@ void ImageViewer::on_actionSave_as_triggered()
 		msgBox.exec();
 	}
 }
-void ImageViewer::on_actionClear_triggered()
+
+void ImageViewer::on_pushButtonClear_clicked()
 {
+	ui->groupBox_3->setEnabled(false);
 	vW->clear();
 }
+
+void ImageViewer::on_actionClear_triggered()
+{
+	ui->groupBox_3->setEnabled(false);
+	vW->clear();
+}
+
 void ImageViewer::on_actionExit_triggered()
 {
 	this->close();
@@ -247,7 +276,6 @@ void ImageViewer::on_pushButtonSymmetry_clicked()
 	vW->symmetry(globalColor, ui->comboBoxLineAlg->currentIndex());
 
 }
-
 
 void ImageViewer::on_comboBoxFigure_currentIndexChanged(int index)
 {

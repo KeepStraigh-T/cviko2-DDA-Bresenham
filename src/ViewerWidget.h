@@ -3,9 +3,6 @@
 #include <cmath>
 #include <QtNumeric>
 
-//using std::cos;
-//using std::sin;
-
 class ViewerWidget :public QWidget {
 	Q_OBJECT
 private:
@@ -14,6 +11,7 @@ private:
 	uchar* data = nullptr;
 
 	QVector <QPoint> vertices;
+	QVector <QPoint> transformedVert;
 
 	bool drawActivated = false;
 
@@ -35,7 +33,7 @@ public:
 	void setPixel(int x, int y, const QColor& color);
 	bool isInside(int x, int y);
 
-	//Draw functions
+//Draw functions
 	void drawLine(QPoint start, QPoint end, QColor color, int algType = 0);
 	void drawCircle(QPoint center, QPoint end, QColor color);
 	void drawCirclePoints(int xc, int yc, int x, int y, QColor color);
@@ -48,7 +46,7 @@ public:
 	bool getDrawActivated() { return drawActivated; }
 	void swapPoints(QPoint& start, QPoint& end);
 
-		//Transformations
+//Transformations
 	void rotate(double angle, QColor color, int algType);
 	void scale(double factorX, double factorY, QColor color, int algType);
 	void shear(double factorX, QColor color, int algType);
@@ -60,7 +58,7 @@ public:
 	QPoint backVertex();
 	QPoint firstVertex();
 	qsizetype sizeVertex();
-	QPoint* operator[](qsizetype idx);
+	inline void initTransfVert() { transformedVert = vertices; transformedVert.detach(); };
 
 
 	//Get/Set functions

@@ -148,6 +148,9 @@ void ViewerWidget::clear()
 	if(!vertices.isEmpty())
 		vertices.clear();
 
+	if (!transformedVert.isEmpty())
+		transformedVert.clear();
+
 	drawActivated = false;
 
 	update();
@@ -342,17 +345,17 @@ void ViewerWidget::rotate(double angle, QColor color, int algType)
 
 	double rad = angle * M_PI / 180.0;
 
-	for(qsizetype i = 1; i < vertices.size(); i++)
+	for(qsizetype i = 1; i < transformedVert.size(); i++)
 	{
-		int x = (vertices[i].x() - vertices[0].x()) * cos(rad) - (vertices[i].y() - vertices[0].y()) * sin(rad) + vertices[0].x() + 0.5;
-		int y = (vertices[i].x() - vertices[0].x()) * sin(rad) + (vertices[i].y() - vertices[0].y()) * cos(rad) + vertices[0].y() + 0.5;
-		vertices[i].setX(x);
-		vertices[i].setY(y);
+		int x = (transformedVert[i].x() - transformedVert[0].x()) * cos(rad) - (transformedVert[i].y() - transformedVert[0].y()) * sin(rad) + transformedVert[0].x() + 0.5;
+		int y = (transformedVert[i].x() - transformedVert[0].x()) * sin(rad) + (transformedVert[i].y() - transformedVert[0].y()) * cos(rad) + transformedVert[0].y() + 0.5;
+		transformedVert[i].setX(x);
+		transformedVert[i].setY(y);
 
-		drawLine(vertices[i - 1], vertices[i], color, algType);
+		drawLine(transformedVert[i - 1], transformedVert[i], color, algType);
 	}
 
-	drawLine(vertices.back(), vertices.front(), color, algType);
+	drawLine(transformedVert.back(), transformedVert.front(), color, algType);
 }
 
 void ViewerWidget::scale(double factorX, double factorY, QColor color, int algType)
@@ -362,21 +365,17 @@ void ViewerWidget::scale(double factorX, double factorY, QColor color, int algTy
 
 	img->fill(Qt::white);
 
-	QVector <QPoint>  scaledVer{0};
-	scaledVer.push_back(vertices[0]);
-
-	for(qsizetype i = 1; i < vertices.size(); i++)
+	for(qsizetype i = 1; i < transformedVert.size(); i++)
 	{
 		QPoint ver;
-		int x = (vertices[i].x() - vertices[0].x()) * factorX + vertices[0].x() + 0.5;
-		int y = (vertices[i].y() - vertices[0].y()) * factorY + vertices[0].y() + 0.5;
-		ver.setX(x);
-		ver.setY(y);
-		scaledVer.push_back(ver);
+		int x = (transformedVert[i].x() - transformedVert[0].x()) * factorX + transformedVert[0].x() + 0.5;
+		int y = (transformedVert[i].y() - transformedVert[0].y()) * factorY + transformedVert[0].y() + 0.5;
+		transformedVert[i].setX(x);
+		transformedVert[i].setY(y);
 
-		drawLine(scaledVer[i - 1], scaledVer[i], color, algType);
+		drawLine(transformedVert[i - 1], transformedVert[i], color, algType);
 	}
-	drawLine(scaledVer.back(), scaledVer.front(), color, algType);
+	drawLine(transformedVert.back(), transformedVert.front(), color, algType);
 }
 
 void ViewerWidget::shear(double factorX, QColor color, int algType)
@@ -386,19 +385,15 @@ void ViewerWidget::shear(double factorX, QColor color, int algType)
 
 	img->fill(Qt::white);
 
-	QVector <QPoint>  shearedVer {0};
-	shearedVer.push_back(vertices[0]);
-
 	for(qsizetype i = 1; i < vertices.size(); i++)
 	{
 		QPoint vertx;
-		int x = (vertices[i].x() - vertices[0].x()) + factorX * vertices[i].y() + vertices[0].x() + 0.5;
-		vertx.setX(x);
-		vertx.setY(vertices[i].y());
-		shearedVer.push_back(vertx);
-		drawLine(shearedVer[i - 1], shearedVer[i], color, algType);
+		int x = (transformedVert[i].x() - transformedVert[0].x()) + factorX * transformedVert[i].y() + transformedVert[0].x() + 0.5;
+		transformedVert[i].setX(x);
+		transformedVert[i].setY(transformedVert[i].y());
+		drawLine(transformedVert[i - 1], transformedVert[i], color, algType);
 	}
-	drawLine(shearedVer.back(), shearedVer.front(), color, algType);
+	drawLine(transformedVert.back(), transformedVert.front(), color, algType);
 }
 
 void ViewerWidget::symmetry(QColor color, int algType)
@@ -409,52 +404,54 @@ void ViewerWidget::symmetry(QColor color, int algType)
 	img->fill(Qt::white);
 
 	int lineVetricesAmount = 2;
-	if(vertices.size() > lineVetricesAmount) // symmetry of polygon
+	//transformedVert[0] = transformedVert[0];
+	if(transformedVert.size() > lineVetricesAmount) // symmetry of polygon
 	{
-		drawLine(vertices[0], vertices[1], color, algType);
+		drawLine(transformedVert[0], transformedVert[1], color, algType);
 
-		int axisVektorX = vertices[1].x() - vertices[0].x();    //  = b = -u
-		int axisVektorY = vertices[1].y() - vertices[0].y();    //  = a = v
+		int axisVektorX = transformedVert[1].x() - transformedVert[0].x();    //  = b = -u
+		int axisVektorY = transformedVert[1].y() - transformedVert[0].y();    //  = a = v
 		int a = axisVektorY;	// x value of normal
 		int b = -axisVektorX;	// y value of normal
-		int c = -a * vertices[0].x() - b * vertices[0].y();
+		int c = -a * transformedVert[0].x() - b * transformedVert[0].y();
 
-		for(qsizetype polyVertexIdx = 2; polyVertexIdx < vertices.size(); polyVertexIdx++)
+		for(qsizetype polyVertexIdx = 2; polyVertexIdx < transformedVert.size(); polyVertexIdx++)
 		{
-			int x = vertices[polyVertexIdx].x() - 2 * a * ( (a * vertices[polyVertexIdx].x() + b * vertices[polyVertexIdx].y() + c) / (double)(a * a + b * b) ) + 0.5;
-			int y = vertices[polyVertexIdx].y() - 2 * b * ( (a * vertices[polyVertexIdx].x() + b * vertices[polyVertexIdx].y() + c) / (double)(a * a + b * b) ) + 0.5;
-			vertices[polyVertexIdx].setX(x);
-			vertices[polyVertexIdx].setY(y);
+			int x = transformedVert[polyVertexIdx].x() - 2 * a * ( (a * transformedVert[polyVertexIdx].x() + b * transformedVert[polyVertexIdx].y() + c) / (double)(a * a + b * b) ) + 0.5;
+			int y = transformedVert[polyVertexIdx].y() - 2 * b * ( (a * transformedVert[polyVertexIdx].x() + b * transformedVert[polyVertexIdx].y() + c) / (double)(a * a + b * b) ) + 0.5;
+			transformedVert[polyVertexIdx].setX(x);
+			transformedVert[polyVertexIdx].setY(y);
 
 			// connect current modified and previous vertices
-			drawLine(vertices[polyVertexIdx - 1], vertices[polyVertexIdx], color, algType);
+			drawLine(transformedVert[polyVertexIdx - 1], transformedVert[polyVertexIdx], color, algType);
 		}
-		drawLine(vertices.front(), vertices.back(), color, algType); // connect first and last vertices
+		drawLine(transformedVert.front(), transformedVert.back(), color, algType); // connect first and last vertices
 	}
-	else if(vertices.size() == lineVetricesAmount) // symmetry of line segment
+	else if(transformedVert.size() == lineVetricesAmount) // symmetry of line segment
 	{
-		// symmetry axis is parallel to Oy
-		if(qAbs(vertices.back().x() - vertices.front().x()) > qAbs(vertices.back().y() - vertices.front().y()))				// dy < dx
+		// symmetry axis is parallel to Ox
+		if(qAbs(transformedVert.back().x() - transformedVert.front().x()) > qAbs(transformedVert.back().y() - transformedVert.front().y()))				// dy < dx
 		{
 			int axisVektorX = img->width();
 			int b = -axisVektorX;	// y value of normal
-			int c = -b * vertices[0].y();
+			int c = -b * transformedVert[0].y();
 
-			int y = vertices[1].y() - 2 * b * ((b * vertices[1].y() + c) / (double) (b * b)) + 0.5;
-			vertices[1].setY(y);
+			int y = transformedVert[1].y() - 2 * b * ((b * transformedVert[1].y() + c) / (double) (b * b)) + 0.5;
+			transformedVert[1].setY(y);
 
-			drawLine(vertices.front(), vertices.back(), color, algType);
+			drawLine(transformedVert.front(), transformedVert.back(), color, algType);
 		}
+		// symmetry axis is parallel to Oy
 		else
 		{
 			int axisVektorY = img->height();
 			int a = axisVektorY;
-			int c = -a * vertices[0].x();
+			int c = -a * transformedVert[0].x();
 
-			int x = vertices[1].x() - 2 * a * ((a * vertices[1].x() + c) / (double) (a * a)) + 0.5;
-			vertices[1].setX(x);
+			int x = transformedVert[1].x() - 2 * a * ((a * transformedVert[1].x() + c) / (double) (a * a)) + 0.5;
+			transformedVert[1].setX(x);
 
-			drawLine(vertices.front(), vertices.back(), color, algType);
+			drawLine(transformedVert.front(), transformedVert.back(), color, algType);
 		}
 	}
 }
