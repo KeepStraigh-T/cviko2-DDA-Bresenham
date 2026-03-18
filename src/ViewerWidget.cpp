@@ -133,16 +133,80 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
 }
 
 void ViewerWidget::drawPolygon(QColor color, int algType)
+{ 
+	if (transformedVert.size() > 2) // Polygon
+	{
+		QVector <QPoint> clippedPoints = clippingPolygon();
+		if (clippedPoints.size() > 1) // polygon must be clipped
+		{
+			for (qsizetype i = 0; clippedPoints.size(); i++)
+			{
+				if (i + 1 == clippedPoints.size())
+					drawLine(clippedPoints[i], clippedPoints[0], color, algType);
+				else
+					drawLine(clippedPoints[i], clippedPoints[i + 1], color, algType);
+			}
+		}
+		else //Line
+		{
+			QVector<QPoint> clippedPoints = clippingLine(); 
+			if (clippedPoints.size() > 1) // line must be clipped
+				drawLine(clippedPoints[0], clippedPoints[1], color, algType);
+		}
+	}
+}
+
+QVector<QPoint> ViewerWidget::clippingLine()
 {
+	QVector<QPoint> viewerWidgetEdges;
+	viewerWidgetEdges.push_back(QPoint(0, 0));
+	viewerWidgetEdges.push_back(QPoint(0, img->height()));
+	viewerWidgetEdges.push_back(QPoint(img->width(), img->height()));
+	viewerWidgetEdges.push_back(QPoint(img->width(), 0));
+
+	double tL = 0.0;
+	double tU = 1.0;
+	QPoint d(transformedVert[1].x() - transformedVert[0].x(), transformedVert[1].y() - transformedVert[0].y());
+
+	qsizetype i = 0;
+	while (i < viewerWidgetEdges.size())
+	{
+		i %= viewerWidgetEdges.size();
+
+		QPoint normal(viewerWidgetEdges[i + 1].x() - viewerWidgetEdges[i].x(), viewerWidgetEdges[i + 1].y() - viewerWidgetEdges[i].y());
+
+		QPoint w(transformedVert[0].x() - viewerWidgetEdges[i].x(), transformedVert[0].y() - viewerWidgetEdges[i].y());
+
+		int dn = d.x() * normal.x() - d.y() * normal.y();
+		int wn = w.x() * normal.x() - w.y() * normal.y();
+
+		if (dn != 0)
+		{
+			double t = -dn / (double)wn;
+
+			if (dn > 0 && t <= 1)
+				tL = qMax(t, tL);
+			else if (dn < 0 && t >= 0)
+				tU = qMax(t, tU);
+		}
+	}
+
+	if (tL == 0.0 && tU == 1.0)
+	{
+		if (!(transformedVert[0].x() <= img->width() && transformedVert[0].x() >= 0 && transformedVert[0].y() <= img->height() && transformedVert[0].y() >= 0))
+			return transformedVert;
+	}
+	else if (tL > 0 && tL < 1 && tU > 0 && tU < 1)
+	{ 
+		QVector<QPoint> clippedPoints;
+		clippedPoints.push_back(QPoint(transformedVert[0].x() + ( transformedVert[1].x() - transformedVert[0].x() ) * tL + 0.5, transformedVert[0].y() + (transformedVert[1].y() - transformedVert[0].y()) * tL + 0.5);
+		clippedPoints.push_back(QPoint(transformedVert[0].x() + (transformedVert[1].x() - transformedVert[0].x()) * tL + 0.5, transformedVert[0].y() + (transformedVert[1].y() - transformedVert[0].y()) * tL + 0.5);
+
+	}
 
 }
 
-void ViewerWidget::clippingLine()
-{
-
-}
-
-void ViewerWidget::clippingPolygon()
+QVector<QPoint> ViewerWidget::clippingPolygon()
 {
 
 }

@@ -40,8 +40,8 @@ public:
 	void drawCirclePoints(int xc, int yc, int x, int y, QColor color);
 
 	//Clipping functions
-	void clippingLine();
-	void clippingPolygon();
+	QVector<QPoint> clippingLine();
+	QVector<QPoint> clippingPolygon();
 
 	// Additional functions for drawing
 	void setDrawLineBegin(QPoint begin) { drawLineBegin = begin; }

@@ -107,7 +107,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 
 	else if(e->button() == Qt::RightButton)
 	{
-		drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+		vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
 		// Enable ui
 		if (w->getDrawActivated()) 
 		{
