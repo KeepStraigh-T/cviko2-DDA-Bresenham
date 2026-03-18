@@ -107,6 +107,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 
 	else if(e->button() == Qt::RightButton)
 	{
+		vW->initTransfVert(); // initialize transformed vertices with original
 		vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
 		// Enable ui
 		if (w->getDrawActivated()) 
@@ -120,7 +121,6 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 			ui->groupBox_3->setEnabled(true);
 		}
 
-		vW->initTransfVert(); // initialize transformed vertices with original
 
 		//if(w->sizeVertex() == 2) // Finish drawing line
 		//	return;
@@ -250,7 +250,8 @@ void ImageViewer::on_pushButtonRotate_clicked()
 	if (vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
 		return;
 
-	vW->rotate(ui->rotateAngleSpinBox->value(), globalColor, ui->comboBoxLineAlg->currentIndex());
+	vW->rotate(ui->rotateAngleSpinBox->value(), );
+	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
 }
 
 void ImageViewer::on_pushButtonScale_clicked()

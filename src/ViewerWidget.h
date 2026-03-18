@@ -51,7 +51,7 @@ public:
 	void swapPoints(QPoint& start, QPoint& end);
 
 //Transformations
-	void rotate(double angle, QColor color, int algType);
+	void rotate(double angle, QVector<QPoint>& trasformedVert);
 	void scale(double factorX, double factorY, QColor color, int algType);
 	void shear(double factorX, QColor color, int algType);
 	void symmetry(QColor color, int algType);

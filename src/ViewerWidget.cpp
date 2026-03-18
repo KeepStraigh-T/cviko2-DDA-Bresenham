@@ -139,7 +139,7 @@ void ViewerWidget::drawPolygon(QColor color, int algType)
 		QVector <QPoint> clippedPoints = clippingPolygon();
 		if (clippedPoints.size() > 1) // polygon must be clipped
 		{
-			for (qsizetype i = 0; clippedPoints.size(); i++)
+			for (qsizetype i = 0; i < clippedPoints.size(); i++)
 			{
 				if (i + 1 == clippedPoints.size())
 					drawLine(clippedPoints[i], clippedPoints[0], color, algType);
@@ -147,12 +147,12 @@ void ViewerWidget::drawPolygon(QColor color, int algType)
 					drawLine(clippedPoints[i], clippedPoints[i + 1], color, algType);
 			}
 		}
-		else //Line
-		{
-			QVector<QPoint> clippedPoints = clippingLine(); 
-			if (clippedPoints.size() > 1) // line must be clipped
-				drawLine(clippedPoints[0], clippedPoints[1], color, algType);
-		}
+	}
+	else //Line
+	{
+		QVector<QPoint> clippedPoints = clippingLine(); 
+		if (clippedPoints.size() > 1) // line must be clipped
+			drawLine(clippedPoints[0], clippedPoints[1], color, algType);
 	}
 }
 
@@ -171,24 +171,32 @@ QVector<QPoint> ViewerWidget::clippingLine()
 	qsizetype i = 0;
 	while (i < viewerWidgetEdges.size())
 	{
-		i %= viewerWidgetEdges.size();
-
-		QPoint normal(viewerWidgetEdges[i + 1].x() - viewerWidgetEdges[i].x(), viewerWidgetEdges[i + 1].y() - viewerWidgetEdges[i].y());
-
+		QPoint normal;
+		if(i == viewerWidgetEdges.size() - 1)
+		{
+			normal.setX(viewerWidgetEdges.back().y() - viewerWidgetEdges.front().y());
+			normal.setY(-(viewerWidgetEdges.back().x() - viewerWidgetEdges.front().x()));
+		}
+		else
+		{
+			normal.setX(viewerWidgetEdges[i + 1].y() - viewerWidgetEdges[i].y());
+			normal.setY(-(viewerWidgetEdges[i + 1].x() - viewerWidgetEdges[i].x()));
+		}
 		QPoint w(transformedVert[0].x() - viewerWidgetEdges[i].x(), transformedVert[0].y() - viewerWidgetEdges[i].y());
 
-		int dn = d.x() * normal.x() - d.y() * normal.y();
-		int wn = w.x() * normal.x() - w.y() * normal.y();
+		int dn = d.x() * normal.x() + d.y() * normal.y();
+		int wn = w.x() * normal.x() + w.y() * normal.y();
+
+		double t = -dn / (double)wn;
 
 		if (dn != 0)
 		{
-			double t = -dn / (double)wn;
-
 			if (dn > 0 && t <= 1)
 				tL = qMax(t, tL);
 			else if (dn < 0 && t >= 0)
 				tU = qMax(t, tU);
 		}
+		i++;
 	}
 
 	if (tL == 0.0 && tU == 1.0)
@@ -199,16 +207,46 @@ QVector<QPoint> ViewerWidget::clippingLine()
 	else if (tL > 0 && tL < 1 && tU > 0 && tU < 1)
 	{ 
 		QVector<QPoint> clippedPoints;
-		clippedPoints.push_back(QPoint(transformedVert[0].x() + ( transformedVert[1].x() - transformedVert[0].x() ) * tL + 0.5, transformedVert[0].y() + (transformedVert[1].y() - transformedVert[0].y()) * tL + 0.5);
-		clippedPoints.push_back(QPoint(transformedVert[0].x() + (transformedVert[1].x() - transformedVert[0].x()) * tL + 0.5, transformedVert[0].y() + (transformedVert[1].y() - transformedVert[0].y()) * tL + 0.5);
-
+		clippedPoints.push_back(QPoint(transformedVert[0].x() + ( transformedVert[1].x() - transformedVert[0].x() ) * tL + 0.5, transformedVert[0].y() + (transformedVert[1].y() - transformedVert[0].y()) * tL + 0.5));
+		clippedPoints.push_back(QPoint(transformedVert[0].x() + (transformedVert[1].x() - transformedVert[0].x()) * tU + 0.5, transformedVert[0].y() + (transformedVert[1].y() - transformedVert[0].y()) * tU + 0.5));
+		return clippedPoints;
 	}
 
+	return transformedVert;
 }
 
 QVector<QPoint> ViewerWidget::clippingPolygon()
 {
+	QVector<QPoint> clippedPoints;
+	QPoint S(transformedVert.back());
 
+	int xMin = 0;
+	int turns = 0;
+	while(turns++ < 4)
+	{
+		for(qsizetype i = 0; i < transformedVert.size(); i++)
+		{
+			QPoint V = transformedVert[i];
+			if(V.x() >= xMin)
+			{
+				if(S.x() >= xMin)
+					clippedPoints.push_back(V);
+				else
+				{
+					clippedPoints.push_back(QPoint(xMin, S.y() + ((xMin - S.x()) / (double) (V.x() - S.x())) * (V.y() - S.y()) + 0.5));
+					clippedPoints.push_back(V);
+				}
+			}
+			else
+				if(S.x() >= xMin)
+					clippedPoints.push_back(QPoint(xMin, S.y() + ((xMin - S.x()) / (double) (V.x() - S.x())) * (V.y() - S.y()) + 0.5));
+
+			S = V;
+		}
+		rotate(90.0);
+	}
+
+	return clippedPoints;
 }
 
 void ViewerWidget::drawCircle(QPoint center, QPoint end, QColor color)
@@ -291,7 +329,6 @@ void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
 
 void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
 {
-
 	if(qAbs(end.y() - start.y()) < qAbs(end.x() - start.x()))			// dy < dx -> 0<m<1 or -1<m<0
 	{
 		if(start.x() > end.x())																			// x0 > x1
@@ -415,7 +452,7 @@ void ViewerWidget::swapPoints(QPoint& start, QPoint& end)
 }
 
 //Transformations
-void ViewerWidget::rotate(double angle, QColor color, int algType)
+void ViewerWidget::rotate(double angle, QVector<QPoint>& trasformedVert)
 {
 	if(!img)
 		return;
@@ -431,10 +468,10 @@ void ViewerWidget::rotate(double angle, QColor color, int algType)
 		transformedVert[i].setX(x);
 		transformedVert[i].setY(y);
 
-		drawLine(transformedVert[i - 1], transformedVert[i], color, algType);
+		//drawLine(transformedVert[i - 1], transformedVert[i], color, algType);
 	}
-
-	drawLine(transformedVert.back(), transformedVert.front(), color, algType);
+	
+	//drawLine(transformedVert.back(), transformedVert.front(), color, algType);
 }
 
 void ViewerWidget::scale(double factorX, double factorY, QColor color, int algType)
