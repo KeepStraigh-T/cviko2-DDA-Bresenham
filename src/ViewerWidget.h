@@ -35,11 +35,15 @@ public:
 
 //Draw functions
 	void drawLine(QPoint start, QPoint end, QColor color, int algType = 0);
+	void drawPolygon(QColor color, int algType);
 	void drawCircle(QPoint center, QPoint end, QColor color);
 	void drawCirclePoints(int xc, int yc, int x, int y, QColor color);
 
+	//Clipping functions
+	void clippingLine();
+	void clippingPolygon();
 
-
+	// Additional functions for drawing
 	void setDrawLineBegin(QPoint begin) { drawLineBegin = begin; }
 	QPoint getDrawLineBegin() { return drawLineBegin; }
 	void setDrawActivated(bool state) { drawActivated = state; }

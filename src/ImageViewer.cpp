@@ -90,7 +90,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 			// Draw line/polygone
 			else if(ui->comboBoxFigure->currentIndex() == 0)
 			{
-				w->drawLine(w->backVertex(), e->pos(), globalColor, ui->comboBoxLineAlg->currentIndex());
+				//w->drawLine(w->backVertex(), e->pos(), globalColor, ui->comboBoxLineAlg->currentIndex());
 				w->push_backVertex(e->pos());
 			}
 		}
@@ -107,6 +107,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 
 	else if(e->button() == Qt::RightButton)
 	{
+		drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
 		// Enable ui
 		if (w->getDrawActivated()) 
 		{
@@ -119,12 +120,12 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 			ui->groupBox_3->setEnabled(true);
 		}
 
-		if(w->sizeVertex() == 2) // Finish drawing line
-			return;
-
 		vW->initTransfVert(); // initialize transformed vertices with original
 
-		w->drawLine(w->backVertex(), w->firstVertex(), globalColor, ui->comboBoxLineAlg->currentIndex()); // Finish drawing polygon
+		//if(w->sizeVertex() == 2) // Finish drawing line
+		//	return;
+
+		//w->drawLine(w->backVertex(), w->firstVertex(), globalColor, ui->comboBoxLineAlg->currentIndex()); // Finish drawing polygon
 	}
 }
 

@@ -132,6 +132,21 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
 	update();
 }
 
+void ViewerWidget::drawPolygon(QColor color, int algType)
+{
+
+}
+
+void ViewerWidget::clippingLine()
+{
+
+}
+
+void ViewerWidget::clippingPolygon()
+{
+
+}
+
 void ViewerWidget::drawCircle(QPoint center, QPoint end, QColor color)
 {
 	if (!img || !data) return;
@@ -367,7 +382,6 @@ void ViewerWidget::scale(double factorX, double factorY, QColor color, int algTy
 
 	for(qsizetype i = 1; i < transformedVert.size(); i++)
 	{
-		QPoint ver;
 		int x = (transformedVert[i].x() - transformedVert[0].x()) * factorX + transformedVert[0].x() + 0.5;
 		int y = (transformedVert[i].y() - transformedVert[0].y()) * factorY + transformedVert[0].y() + 0.5;
 		transformedVert[i].setX(x);
