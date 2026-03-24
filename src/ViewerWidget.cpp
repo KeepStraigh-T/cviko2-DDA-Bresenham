@@ -220,18 +220,17 @@ QVector<QPoint> ViewerWidget::clippingPolygon()
 {
 	QVector<QPoint> tempPoints = transformedVert;
 	QVector<QPoint> clippedPoints;
-	QPoint S(transformedVert.back());
 
-	//int xMin = 0;
 	QVector <int> xMin;
 	xMin.push_back(0);
-	xMin.push_back(-img->height());
-	xMin.push_back(-img->width());
 	xMin.push_back(0);
+	xMin.push_back(-img->width());
+	xMin.push_back(-img->height());
 
 	int turns = 0;
 	while(turns < 4)
 	{
+		QPoint S(tempPoints.back());
 		for(qsizetype i = 0; i < tempPoints.size(); i++)
 		{
 			QPoint V = tempPoints[i];
@@ -491,10 +490,12 @@ void ViewerWidget::rotate(double angle, QVector<QPoint>& Verts)
 
 	for(qsizetype i = 1; i < Verts.size(); i++)
 	{
-		int x = (Verts[i].x() - Verts[0].x()) * cos(rad) - (Verts[i].y() - Verts[0].y()) * sin(rad) + Verts[0].x() + 0.5;
-		int y = (Verts[i].x() - Verts[0].x()) * sin(rad) + (Verts[i].y() - Verts[0].y()) * cos(rad) + Verts[0].y() + 0.5;
-		Verts[i].setX(x);
-		Verts[i].setY(y);
+		//int x = (Verts[i].x() - Verts[0].x()) * cos(rad) - (Verts[i].y() - Verts[0].y()) * sin(rad) + Verts[0].x() + 0.5;
+		//int y = (Verts[i].x() - Verts[0].x()) * sin(rad) + (Verts[i].y() - Verts[0].y()) * cos(rad) + Verts[0].y() + 0.5;
+		int xRotated = -Verts[i].y();
+		int yRotated = Verts[i].x();
+		Verts[i].setX(xRotated);
+		Verts[i].setY(yRotated);
 	}
 }
 
