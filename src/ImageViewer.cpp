@@ -250,7 +250,7 @@ void ImageViewer::on_pushButtonRotate_clicked()
 	if (vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
 		return;
 
-	vW->rotate(ui->rotateAngleSpinBox->value(), );
+	vW->rotate(ui->rotateAngleSpinBox->value());
 	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
 }
 
