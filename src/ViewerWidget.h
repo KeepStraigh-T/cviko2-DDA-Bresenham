@@ -51,8 +51,7 @@ public:
 	void swapPoints(QPoint& start, QPoint& end);
 
 //Transformations
-	void rotate(double angle/*, QVector<QPoint>& trasformedVert*/);
-void rotate(double angle, QVector<QPoint>& Verts);
+	void rotate(double angle);
 	void scale(double factorX, double factorY, QColor color, int algType);
 	void shear(double factorX, QColor color, int algType);
 	void symmetry(QColor color, int algType);
@@ -63,7 +62,7 @@ void rotate(double angle, QVector<QPoint>& Verts);
 	QPoint backVertex();
 	QPoint firstVertex();
 	qsizetype sizeVertex();
-	inline void initTransfVert() { transformedVert = vertices; transformedVert.detach(); };
+	void initTransfVert() { transformedVert = vertices; transformedVert.detach(); };
 
 
 	//Get/Set functions

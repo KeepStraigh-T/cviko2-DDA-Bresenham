@@ -134,23 +134,26 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
 
 void ViewerWidget::drawPolygon(QColor color, int algType)
 { 
+	if(isEmpty())
+	return;
+
+	img->fill(Qt::white);
+
 	if (transformedVert.size() > 2) // Polygon
 	{
 		QVector <QPoint> clippedPoints = clippingPolygon();
+
 		if (clippedPoints.size() > 1) // polygon must be clipped
 		{
-			for (qsizetype i = 0; i < clippedPoints.size(); i++)
-			{
-				if (i + 1 == clippedPoints.size())
-					drawLine(clippedPoints[i], clippedPoints[0], color, algType);
-				else
-					drawLine(clippedPoints[i], clippedPoints[i + 1], color, algType);
-			}
+			for (qsizetype i = 1; i < clippedPoints.size(); i++)
+				drawLine(clippedPoints[i - 1], clippedPoints[i], color, algType);
+
+			drawLine(clippedPoints.back(), clippedPoints[0], color, algType);
 		}
 	}
 	else //Line
 	{
-		QVector<QPoint> clippedPoints = clippingLine(); 
+		QVector<QPoint> clippedPoints = clippingLine();
 		if (clippedPoints.size() > 1) // line must be clipped
 			drawLine(clippedPoints[0], clippedPoints[1], color, algType);
 	}
@@ -221,18 +224,14 @@ QVector<QPoint> ViewerWidget::clippingPolygon()
 	QVector<QPoint> tempPoints = transformedVert;
 	QVector<QPoint> clippedPoints;
 
-	QVector <int> xMin;
-	xMin.push_back(0);
-	xMin.push_back(0);
-	xMin.push_back(-img->width());
-	xMin.push_back(-img->height());
+	int xMin[] {0, -(img->height() - 1), -(img->width() - 1), 0}; // need to decrement axis goes from 0 to height/weight - 1)
 
 	int turns = 0;
 	while(turns < 4)
 	{
 		QPoint S(tempPoints.back());
 		for(qsizetype i = 0; i < tempPoints.size(); i++)
-		{
+		{ 
 			QPoint V = tempPoints[i];
 			if(V.x() >= xMin[turns])
 			{
@@ -252,7 +251,13 @@ QVector<QPoint> ViewerWidget::clippingPolygon()
 		}
 		tempPoints = clippedPoints;
 		clippedPoints.clear();
-		rotate(90.0, tempPoints);
+		for(qsizetype i = 0; i < tempPoints.size(); i++)
+		{
+			int xRotated = -tempPoints[i].y();
+			int yRotated = tempPoints[i].x();
+			tempPoints[i].setX(xRotated);
+			tempPoints[i].setY(yRotated);
+		}
 		turns++;
 	}
 
@@ -464,11 +469,6 @@ void ViewerWidget::swapPoints(QPoint& start, QPoint& end)
 //Transformations
 void ViewerWidget::rotate(double angle)
 {
-	if(!img)
-		return;
-
-	img->fill(Qt::white);
-
 	double rad = angle * M_PI / 180.0;
 
 	for(qsizetype i = 1; i < transformedVert.size(); i++)
@@ -477,76 +477,36 @@ void ViewerWidget::rotate(double angle)
 		int y = (transformedVert[i].x() - transformedVert[0].x()) * sin(rad) + (transformedVert[i].y() - transformedVert[0].y()) * cos(rad) + transformedVert[0].y() + 0.5;
 		transformedVert[i].setX(x);
 		transformedVert[i].setY(y);
-
-		//drawLine(transformedVert[i - 1], transformedVert[i], color, algType);
-	}
-	
-	//drawLine(transformedVert.back(), transformedVert.front(), color, algType);
-}
-
-void ViewerWidget::rotate(double angle, QVector<QPoint>& Verts)
-{
-	double rad = angle * M_PI / 180.0;
-
-	for(qsizetype i = 1; i < Verts.size(); i++)
-	{
-		//int x = (Verts[i].x() - Verts[0].x()) * cos(rad) - (Verts[i].y() - Verts[0].y()) * sin(rad) + Verts[0].x() + 0.5;
-		//int y = (Verts[i].x() - Verts[0].x()) * sin(rad) + (Verts[i].y() - Verts[0].y()) * cos(rad) + Verts[0].y() + 0.5;
-		int xRotated = -Verts[i].y();
-		int yRotated = Verts[i].x();
-		Verts[i].setX(xRotated);
-		Verts[i].setY(yRotated);
 	}
 }
-
 
 void ViewerWidget::scale(double factorX, double factorY, QColor color, int algType)
 {
-	if(isEmpty())
-		return;
-
-	img->fill(Qt::white);
-
 	for(qsizetype i = 1; i < transformedVert.size(); i++)
 	{
 		int x = (transformedVert[i].x() - transformedVert[0].x()) * factorX + transformedVert[0].x() + 0.5;
 		int y = (transformedVert[i].y() - transformedVert[0].y()) * factorY + transformedVert[0].y() + 0.5;
 		transformedVert[i].setX(x);
 		transformedVert[i].setY(y);
-
-		drawLine(transformedVert[i - 1], transformedVert[i], color, algType);
 	}
-	drawLine(transformedVert.back(), transformedVert.front(), color, algType);
 }
 
 void ViewerWidget::shear(double factorX, QColor color, int algType)
 {
-	if(isEmpty())
-		return;
-
-	img->fill(Qt::white);
-
 	for(qsizetype i = 1; i < vertices.size(); i++)
 	{
 		QPoint vertx;
-		int x = (transformedVert[i].x() - transformedVert[0].x()) + factorX * transformedVert[i].y() + transformedVert[0].x() + 0.5;
+		int x = (transformedVert[i].x() - transformedVert[0].x()) + factorX * transformedVert[i].y() + transformedVert[0].x() + 0.5; 
 		transformedVert[i].setX(x);
 		transformedVert[i].setY(transformedVert[i].y());
-		drawLine(transformedVert[i - 1], transformedVert[i], color, algType);
 	}
-	drawLine(transformedVert.back(), transformedVert.front(), color, algType);
 }
 
 void ViewerWidget::symmetry(QColor color, int algType)
 {
-	if(isEmpty())
-		return;
-
-	img->fill(Qt::white);
-
 	int lineVetricesAmount = 2;
-	//transformedVert[0] = transformedVert[0];
-	if(transformedVert.size() > lineVetricesAmount) // symmetry of polygon
+	// Polygon symmetry
+	if(transformedVert.size() > lineVetricesAmount)
 	{
 		drawLine(transformedVert[0], transformedVert[1], color, algType);
 
@@ -562,16 +522,13 @@ void ViewerWidget::symmetry(QColor color, int algType)
 			int y = transformedVert[polyVertexIdx].y() - 2 * b * ( (a * transformedVert[polyVertexIdx].x() + b * transformedVert[polyVertexIdx].y() + c) / (double)(a * a + b * b) ) + 0.5;
 			transformedVert[polyVertexIdx].setX(x);
 			transformedVert[polyVertexIdx].setY(y);
-
-			// connect current modified and previous vertices
-			drawLine(transformedVert[polyVertexIdx - 1], transformedVert[polyVertexIdx], color, algType);
 		}
-		drawLine(transformedVert.front(), transformedVert.back(), color, algType); // connect first and last vertices
 	}
-	else if(transformedVert.size() == lineVetricesAmount) // symmetry of line segment
+	// Line symmetry
+	else if(transformedVert.size() == lineVetricesAmount) 
 	{
 		// symmetry axis is parallel to Ox
-		if(qAbs(transformedVert.back().x() - transformedVert.front().x()) > qAbs(transformedVert.back().y() - transformedVert.front().y()))				// dy < dx
+		if(qAbs(transformedVert.back().x() - transformedVert.front().x()) > qAbs(transformedVert.back().y() - transformedVert.front().y()))	// dy < dx
 		{
 			int axisVektorX = img->width();
 			int b = -axisVektorX;	// y value of normal
@@ -579,8 +536,6 @@ void ViewerWidget::symmetry(QColor color, int algType)
 
 			int y = transformedVert[1].y() - 2 * b * ((b * transformedVert[1].y() + c) / (double) (b * b)) + 0.5;
 			transformedVert[1].setY(y);
-
-			drawLine(transformedVert.front(), transformedVert.back(), color, algType);
 		}
 		// symmetry axis is parallel to Oy
 		else
@@ -591,8 +546,6 @@ void ViewerWidget::symmetry(QColor color, int algType)
 
 			int x = transformedVert[1].x() - 2 * a * ((a * transformedVert[1].x() + c) / (double) (a * a)) + 0.5;
 			transformedVert[1].setX(x);
-
-			drawLine(transformedVert.front(), transformedVert.back(), color, algType);
 		}
 	}
 }

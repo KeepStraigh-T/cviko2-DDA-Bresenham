@@ -4,7 +4,7 @@ ImageViewer::ImageViewer(QWidget* parent)
 	: QMainWindow(parent), ui(new Ui::ImageViewerClass)
 {
 	ui->setupUi(this);
-	vW = new ViewerWidget(this->size(), ui->scrollArea);
+	vW = new ViewerWidget(QSize(600,600), ui->scrollArea);
 	ui->scrollArea->setWidget(vW);
 
 	QSizePolicy policy = ui->scrollArea->sizePolicy();
@@ -89,10 +89,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 			}
 			// Draw line/polygone
 			else if(ui->comboBoxFigure->currentIndex() == 0)
-			{
-				//w->drawLine(w->backVertex(), e->pos(), globalColor, ui->comboBoxLineAlg->currentIndex());
 				w->push_backVertex(e->pos());
-			}
 		}
 		else
 		{
@@ -120,12 +117,6 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 			ui->actionClear->setEnabled(true);
 			ui->groupBox_3->setEnabled(true);
 		}
-
-
-		//if(w->sizeVertex() == 2) // Finish drawing line
-		//	return;
-
-		//w->drawLine(w->backVertex(), w->firstVertex(), globalColor, ui->comboBoxLineAlg->currentIndex()); // Finish drawing polygon
 	}
 }
 
@@ -146,6 +137,15 @@ void ImageViewer::ViewerWidgetEnter(ViewerWidget* w, QEvent* event)
 void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event)
 {
 	QWheelEvent* wheelEvent = static_cast<QWheelEvent*>(event);
+
+	int scaleFactorSign = wheelEvent->angleDelta().y();
+
+	if(scaleFactorSign > 0)
+		vW->scale(1.25, 1.25, globalColor, ui->comboBoxLineAlg->currentIndex());
+	else if(scaleFactorSign < 0)
+		vW->scale(0.75, 0.75, globalColor, ui->comboBoxLineAlg->currentIndex());
+
+	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
 }
 
 //ImageViewer Events
@@ -260,6 +260,8 @@ void ImageViewer::on_pushButtonScale_clicked()
 		return;
 
 	vW->scale(ui->xFactorScaleSpinBox->value(), ui->yFactorScaleSpinBox->value(), globalColor, ui->comboBoxLineAlg->currentIndex());
+	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+
 }
 
 void ImageViewer::on_pushButtonShear_clicked()
@@ -268,6 +270,8 @@ void ImageViewer::on_pushButtonShear_clicked()
 		return;
 
 	vW->shear(ui->shearSpinBox->value(), globalColor, ui->comboBoxLineAlg->currentIndex());
+	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+
 }
 
 void ImageViewer::on_pushButtonSymmetry_clicked()
@@ -276,7 +280,7 @@ void ImageViewer::on_pushButtonSymmetry_clicked()
 		return;
 
 	vW->symmetry(globalColor, ui->comboBoxLineAlg->currentIndex());
-
+	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
 }
 
 void ImageViewer::on_comboBoxFigure_currentIndexChanged(int index)
