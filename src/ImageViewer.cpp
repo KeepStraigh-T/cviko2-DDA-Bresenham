@@ -71,44 +71,34 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 
 	if(e->button() == Qt::LeftButton)
 	{
-		// Disable ui
-		ui->pushButtonSetColor->setEnabled(false);
-		ui->comboBoxFigure->setEnabled(false);
-		ui->comboBoxLineAlg->setEnabled(false);
-		ui->pushButtonClear->setEnabled(false);
-		ui->actionClear->setEnabled(false);
-		ui->groupBox_3->setEnabled(false);
-
 		if(w->getDrawActivated())
-		{	// Draw circle
-			if(ui->comboBoxFigure->currentIndex() == 1)
-			{
-				w->clear();
-				w->drawCircle(w->getDrawLineBegin(), e->pos(), globalColor);
-				w->setDrawActivated(false);
-			}
-			// Draw line/polygone
-			else if(ui->comboBoxFigure->currentIndex() == 0)
-				w->push_backVertex(e->pos());
+		{
+			// Disable ui
+			ui->pushButtonSetColor->setEnabled(false);
+			ui->comboBoxFigure->setEnabled(false);
+			ui->comboBoxLineAlg->setEnabled(false);
+			ui->pushButtonClear->setEnabled(false);
+			ui->actionClear->setEnabled(false);
+			ui->groupBox_3->setEnabled(false);
+
+			w->push_backVertex(e->pos());
+		}
+		else if (!w->getDragging())
+		{
+			w->setDragging(true);
+			w->setLastMousePos(e->pos());
 		}
 		else
-		{
-			w->clear();
-			w->setDrawActivated(true);
-			w->setPixel(e->pos().x(), e->pos().y(), globalColor);
-			w->setDrawLineBegin(e->pos());
-			w->push_backVertex(e->pos());
-			w->update();
-		}
+			w->setDragging(false);
 	}
 
-	else if(e->button() == Qt::RightButton)
+	else if(e->button() == Qt::RightButton && w->sizeVertex() > 0)
 	{
-		vW->initTransfVert(); // initialize transformed vertices with original
-		vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
-		// Enable ui
-		if (w->getDrawActivated()) 
+		// First right click finishes drawing
+		if (w->getDrawActivated())
 		{
+			vW->initTransfVert(); // initialize transformed vertices with original
+			vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
 			w->setDrawActivated(false);
 			ui->pushButtonSetColor->setEnabled(true);
 			ui->comboBoxFigure->setEnabled(true);
@@ -117,22 +107,25 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 			ui->actionClear->setEnabled(true);
 			ui->groupBox_3->setEnabled(true);
 		}
+		// Second right click clears the canvas
+		else
+		{
+			w->setDragging(false);
+			clearCanvas(); // clear whole canvas on right button click (after finished drawing)
+		}
 	}
 }
 
-void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event)
-{
-	QMouseEvent* e = static_cast<QMouseEvent*>(event);
-}
 void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
-}
-void ImageViewer::ViewerWidgetLeave(ViewerWidget* w, QEvent* event)
-{
-}
-void ImageViewer::ViewerWidgetEnter(ViewerWidget* w, QEvent* event)
-{
+
+	if(!w->getDragging())
+		return;
+
+	w->translation(e->pos());
+	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+
 }
 void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event)
 {
@@ -141,11 +134,22 @@ void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event)
 	int scaleFactorSign = wheelEvent->angleDelta().y();
 
 	if(scaleFactorSign > 0)
-		vW->scale(1.25, 1.25, globalColor, ui->comboBoxLineAlg->currentIndex());
+		vW->scale(1.25, 1.25);
 	else if(scaleFactorSign < 0)
-		vW->scale(0.75, 0.75, globalColor, ui->comboBoxLineAlg->currentIndex());
+		vW->scale(0.75, 0.75);
 
 	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+
+}
+void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event)
+{
+	QMouseEvent* e = static_cast<QMouseEvent*>(event);
+}
+void ImageViewer::ViewerWidgetLeave(ViewerWidget* w, QEvent* event)
+{
+}
+void ImageViewer::ViewerWidgetEnter(ViewerWidget* w, QEvent* event)
+{
 }
 
 //ImageViewer Events
@@ -220,14 +224,19 @@ void ImageViewer::on_actionSave_as_triggered()
 
 void ImageViewer::on_pushButtonClear_clicked()
 {
-	ui->groupBox_3->setEnabled(false);
-	vW->clear();
+	clearCanvas();
 }
 
 void ImageViewer::on_actionClear_triggered()
 {
+	clearCanvas();
+}
+
+void ImageViewer::clearCanvas()
+{
 	ui->groupBox_3->setEnabled(false);
 	vW->clear();
+	vW->setDrawActivated(true);
 }
 
 void ImageViewer::on_actionExit_triggered()
@@ -259,7 +268,7 @@ void ImageViewer::on_pushButtonScale_clicked()
 	if (vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
 		return;
 
-	vW->scale(ui->xFactorScaleSpinBox->value(), ui->yFactorScaleSpinBox->value(), globalColor, ui->comboBoxLineAlg->currentIndex());
+	vW->scale(ui->xFactorScaleSpinBox->value(), ui->yFactorScaleSpinBox->value());
 	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
 
 }
@@ -269,7 +278,7 @@ void ImageViewer::on_pushButtonShear_clicked()
 	if (vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
 		return;
 
-	vW->shear(ui->shearSpinBox->value(), globalColor, ui->comboBoxLineAlg->currentIndex());
+	vW->shear(ui->shearSpinBox->value());
 	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
 
 }
@@ -279,7 +288,7 @@ void ImageViewer::on_pushButtonSymmetry_clicked()
 	if (vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
 		return;
 
-	vW->symmetry(globalColor, ui->comboBoxLineAlg->currentIndex());
+	vW->symmetry();
 	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
 }
 

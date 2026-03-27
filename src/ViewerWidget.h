@@ -13,7 +13,10 @@ private:
 	QVector <QPoint> vertices;
 	QVector <QPoint> transformedVert;
 
-	bool drawActivated = false;
+	bool drawActivated = true;
+
+	QPoint lastMousePos;
+	bool dragging = false;
 
 	QPoint drawLineBegin = QPoint(0, 0);
 
@@ -48,22 +51,25 @@ public:
 	QPoint getDrawLineBegin() { return drawLineBegin; }
 	void setDrawActivated(bool state) { drawActivated = state; }
 	bool getDrawActivated() { return drawActivated; }
+	void setDragging(bool state) { dragging = state; }
+	bool getDragging() { return dragging; }
+	void setLastMousePos(QPoint pos) { lastMousePos = pos; }
+	QPoint getLastMousePos() { return lastMousePos; }
 	void swapPoints(QPoint& start, QPoint& end);
 
 //Transformations
 	void rotate(double angle);
-	void scale(double factorX, double factorY, QColor color, int algType);
-	void shear(double factorX, QColor color, int algType);
-	void symmetry(QColor color, int algType);
-
+	void scale(double factorX, double factorY);
+	void shear(double factorX);
+	void symmetry();
+	void translation(QPoint currentPos);
 
 	void clearVertices();
 	void push_backVertex(QPoint point);
 	QPoint backVertex();
 	QPoint firstVertex();
-	qsizetype sizeVertex();
+	qsizetype sizeVertex() { return vertices.size(); };
 	void initTransfVert() { transformedVert = vertices; transformedVert.detach(); };
-
 
 	//Get/Set functions
 	uchar* getData() { return data; }

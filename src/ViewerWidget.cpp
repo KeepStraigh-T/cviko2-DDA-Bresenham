@@ -143,7 +143,7 @@ void ViewerWidget::drawPolygon(QColor color, int algType)
 	{
 		QVector <QPoint> clippedPoints = clippingPolygon();
 
-		if (clippedPoints.size() > 1) // polygon must be clipped
+		if (clippedPoints.size() > 1) // whole/clipped polygon is inside clipping area
 		{
 			for (qsizetype i = 1; i < clippedPoints.size(); i++)
 				drawLine(clippedPoints[i - 1], clippedPoints[i], color, algType);
@@ -151,7 +151,7 @@ void ViewerWidget::drawPolygon(QColor color, int algType)
 			drawLine(clippedPoints.back(), clippedPoints[0], color, algType);
 		}
 	}
-	else //Line
+	else if (transformedVert.size() == 2) //Line
 	{
 		QVector<QPoint> clippedPoints = clippingLine();
 		if (clippedPoints.size() > 1) // line must be clipped
@@ -190,7 +190,6 @@ QVector<QPoint> ViewerWidget::clippingLine()
 		int dn = d.x() * normal.x() + d.y() * normal.y();
 		int wn = w.x() * normal.x() + w.y() * normal.y();
 
-		//double t = -dn / (double)wn;
 		double t = -wn / (double)dn;
 
 		if (dn != 0)
@@ -224,15 +223,19 @@ QVector<QPoint> ViewerWidget::clippingPolygon()
 	QVector<QPoint> tempPoints = transformedVert;
 	QVector<QPoint> clippedPoints;
 
-	int xMin[] {0, -(img->height() - 1), -(img->width() - 1), 0}; // need to decrement axis goes from 0 to height/weight - 1)
+	int xMin[] {0, -(img->height() - 1), -(img->width() - 1), 0}; // need to decrement - axis goes from 0 to height/weight - 1)
 
 	int turns = 0;
 	while(turns < 4)
 	{
+		if(tempPoints.isEmpty()) // whole polygone outside clipping area
+			break;
+
 		QPoint S(tempPoints.back());
 		for(qsizetype i = 0; i < tempPoints.size(); i++)
 		{ 
 			QPoint V = tempPoints[i];
+
 			if(V.x() >= xMin[turns])
 			{
 				if(S.x() >= xMin[turns])
@@ -314,9 +317,6 @@ QPoint ViewerWidget::firstVertex()
 	else
 		return QPoint(0, 0);
 }
-
-qsizetype ViewerWidget::sizeVertex() { return vertices.size(); }
-
 
 void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
 {
@@ -467,6 +467,22 @@ void ViewerWidget::swapPoints(QPoint& start, QPoint& end)
 }
 
 //Transformations
+
+void ViewerWidget::translation(QPoint currentMousePos)
+{
+	QPoint delta = currentMousePos - lastMousePos;
+
+	for(QPoint& vertx : transformedVert)
+	{
+		vertx += delta;
+		qDebug() << QString("(%1, %2)").arg(vertx.x()).arg(vertx.y());
+	}
+	qDebug() << "\n";
+
+	lastMousePos = currentMousePos;
+	update();
+}
+
 void ViewerWidget::rotate(double angle)
 {
 	double rad = angle * M_PI / 180.0;
@@ -480,7 +496,7 @@ void ViewerWidget::rotate(double angle)
 	}
 }
 
-void ViewerWidget::scale(double factorX, double factorY, QColor color, int algType)
+void ViewerWidget::scale(double factorX, double factorY)
 {
 	for(qsizetype i = 1; i < transformedVert.size(); i++)
 	{
@@ -491,7 +507,7 @@ void ViewerWidget::scale(double factorX, double factorY, QColor color, int algTy
 	}
 }
 
-void ViewerWidget::shear(double factorX, QColor color, int algType)
+void ViewerWidget::shear(double factorX)
 {
 	for(qsizetype i = 1; i < vertices.size(); i++)
 	{
@@ -502,14 +518,12 @@ void ViewerWidget::shear(double factorX, QColor color, int algType)
 	}
 }
 
-void ViewerWidget::symmetry(QColor color, int algType)
+void ViewerWidget::symmetry()
 {
 	int lineVetricesAmount = 2;
 	// Polygon symmetry
 	if(transformedVert.size() > lineVetricesAmount)
 	{
-		drawLine(transformedVert[0], transformedVert[1], color, algType);
-
 		int axisVektorX = transformedVert[1].x() - transformedVert[0].x();    //  = b = -u
 		int axisVektorY = transformedVert[1].y() - transformedVert[0].y();    //  = a = v
 		int a = axisVektorY;	// x value of normal
