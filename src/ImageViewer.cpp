@@ -102,18 +102,17 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 			if(ui->comboBoxFigure->currentIndex() == 0)
 			{
 				vW->initTransfVert();																															// initialize transformed vertices with original
-				vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+				vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
 			}
 			else if(ui->comboBoxFigure->currentIndex() == 1 && w->sizeVertex() == 2)						// draw circle
 				w->drawCircle(globalColor);
 
-			uiAccessibility(true); // Unable interface
+			uiAccessibility(true);																															// unable interface
 			w->setDrawActivated(false);
 		}
 
 		else																																									// second right click clears the canvas
 		{
-			w->setDragging(false);
 			clearCanvas();																																			// clear whole canvas on right button click (after finished drawing)
 		}
 	}
@@ -127,7 +126,7 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 		return;
 
 	w->translation(e->pos());
-	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
 
 }
 void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event)
@@ -141,7 +140,7 @@ void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event)
 	else if(scaleFactorSign < 0)
 		vW->scale(0.75, 0.75);
 
-	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
 
 }
 void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event)
@@ -246,6 +245,8 @@ void ImageViewer::on_actionClear_triggered()
 
 void ImageViewer::clearCanvas()
 {
+	vW->setDragging(false);
+	vW->setFilled(false);
 	ui->groupBox_3->setEnabled(false);
 	vW->clear();
 	vW->setDrawActivated(true);
@@ -273,7 +274,7 @@ void ImageViewer::on_pushButtonRotate_clicked()
 		return;
 
 	vW->rotate(ui->rotateAngleSpinBox->value());
-	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
 }
 
 void ImageViewer::on_pushButtonScale_clicked()
@@ -282,13 +283,16 @@ void ImageViewer::on_pushButtonScale_clicked()
 		return;
 
 	vW->scale(ui->xFactorScaleSpinBox->value(), ui->yFactorScaleSpinBox->value());
-	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
 
 }
 
 void ImageViewer::uiAccessibility(bool state)
 {
 	ui->pushButtonSetColor->setEnabled(state);
+	ui->comboBoxInterpAlg->setEnabled(state);
+	ui->comboBoxInterpAlg->setEnabled(state);
+	ui->pushButtonFill->setEnabled(state);
 	ui->comboBoxFigure->setEnabled(state);
 	ui->comboBoxLineAlg->setEnabled(state);
 	ui->pushButtonClear->setEnabled(state);
@@ -302,7 +306,7 @@ void ImageViewer::on_pushButtonShear_clicked()
 		return;
 
 	vW->shear(ui->shearSpinBox->value());
-	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
 
 }
 
@@ -312,7 +316,7 @@ void ImageViewer::on_pushButtonSymmetry_clicked()
 		return;
 
 	vW->symmetry();
-	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
 }
 
 void ImageViewer::on_comboBoxFigure_currentIndexChanged(int index)
@@ -322,4 +326,18 @@ void ImageViewer::on_comboBoxFigure_currentIndexChanged(int index)
 	else
 		ui->comboBoxLineAlg->setEnabled(true);
 }
+
+void ImageViewer::on_pushButtonFill_clicked()
+{
+	if(vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
+		return;
+
+	if(ui->pushButtonFill->isChecked())
+		vW->setFilled(true);
+	else
+		vW->setFilled(false);
+
+	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
+}
+
 

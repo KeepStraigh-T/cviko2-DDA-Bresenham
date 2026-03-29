@@ -3,7 +3,7 @@
 #include <cmath>
 #include <QtNumeric>
 
-#define DEBUG
+//#define DEBUG
 
 class ViewerWidget :public QWidget {
 	Q_OBJECT
@@ -19,6 +19,8 @@ private:
 
 	QPoint lastMousePos;
 	bool dragging = false;
+
+	bool areaIsFilled = false;
 
 	QPoint drawLineBegin = QPoint(0, 0);
 
@@ -40,7 +42,7 @@ public:
 
 //Draw functions
 	void drawLine(QPoint start, QPoint end, QColor color, int algType = 0);
-	void drawPolygon(QColor color, int algType);
+	void drawPolygon(QColor color, int algType, int interpType);
 	void drawCircle(QColor color);
 	void drawCirclePoints(int xc, int yc, int x, int y, QColor color);
 
@@ -67,9 +69,16 @@ public:
 	void translation(QPoint currentPos);
 
 // Filling functions
+	void setFilled(bool state) { areaIsFilled = state; };
+	bool getFilled() { return areaIsFilled; };
 	void scanLine(const QVector <QPoint>& nodes, const QColor& color);
-	void scanLineTriangle(const QVector <QPoint>& nodes, const QColor& color);			// add interpolationType
+	QColor nearestNeighbor(const QPoint& p, const QPoint& t0, const QPoint& t1, const QPoint& t2, QColor c0, QColor c1, QColor c2);
+	QColor barycentricInterp(const QPoint& p, const QPoint& t0, const QPoint& t1, const QPoint& t2, QColor c0, QColor c1, QColor c2);
+	void scanLineTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType);
+	private: void fillBottomTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2);
+	private: void fillTopTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2);
 
+public:
 	// Vertices access functions
 	void clearVertices();
 	void push_backVertex(QPoint point);

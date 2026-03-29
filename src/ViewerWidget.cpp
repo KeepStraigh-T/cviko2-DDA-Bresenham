@@ -1,4 +1,4 @@
-#include "ViewerWidget.h"
+﻿#include "ViewerWidget.h"
 #include <iostream>
 #include <algorithm>
 #include <cmath>
@@ -30,151 +30,261 @@ void ViewerWidget::resizeWidget(QSize size)
 	this->setMaximumSize(size);
 }
 
-//Image functions
-bool ViewerWidget::setImage(const QImage& inputImg)
+/* Algorithms */
+// Line rasterization
+void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
 {
-	if(img)
-	{
-		delete img;
-		img = nullptr;
-		data = nullptr;
-	}
-	img = new QImage(inputImg.convertToFormat(QImage::Format_ARGB32));
-	if(!img || img->isNull())
-	{
-		return false;
-	}
-	resizeWidget(img->size());
-	setDataPtr();
-	update();
-
-	return true;
-}
-bool ViewerWidget::isEmpty()
-{
-	if(img == nullptr)
-	{
-		return true;
-	}
-
-	if(img->size() == QSize(0, 0))
-	{
-		return true;
-	}
-	return false;
-}
-
-bool ViewerWidget::changeSize(int width, int height)
-{
-	QSize newSize(width, height);
-
-	if(newSize != QSize(0, 0))
-	{
-		if(img != nullptr)
-		{
-			delete img;
-		}
-
-		img = new QImage(newSize, QImage::Format_ARGB32);
-		if(!img || img->isNull())
-		{
-			return false;
-		}
-		img->fill(Qt::white);
-		resizeWidget(img->size());
-		setDataPtr();
-		update();
-	}
-
-	return true;
-}
-
-void ViewerWidget::setPixel(int x, int y, int r, int g, int b, int a)
-{
-	if(!img || !data) return;
-	if(!isInside(x, y)) return;
-
-	r = r > 255 ? 255 : (r < 0 ? 0 : r);
-	g = g > 255 ? 255 : (g < 0 ? 0 : g);
-	b = b > 255 ? 255 : (b < 0 ? 0 : b);
-	a = a > 255 ? 255 : (a < 0 ? 0 : a);
-
-	size_t startbyte = y * img->bytesPerLine() + x * 4;
-	data[startbyte] = static_cast<uchar>(b);
-	data[startbyte + 1] = static_cast<uchar>(g);
-	data[startbyte + 2] = static_cast<uchar>(r);
-	data[startbyte + 3] = static_cast<uchar>(a);
-}
-void ViewerWidget::setPixel(int x, int y, double valR, double valG, double valB, double valA)
-{
-	valR = valR > 1 ? 1 : (valR < 0 ? 0 : valR);
-	valG = valG > 1 ? 1 : (valG < 0 ? 0 : valG);
-	valB = valB > 1 ? 1 : (valB < 0 ? 0 : valB);
-	valA = valA > 1 ? 1 : (valA < 0 ? 0 : valA);
-
-	setPixel(x, y, static_cast<int>(255 * valR + 0.5), static_cast<int>(255 * valG + 0.5), static_cast<int>(255 * valB + 0.5), static_cast<int>(255 * valA + 0.5));
-}
-void ViewerWidget::setPixel(int x, int y, const QColor& color)
-{
-	if(color.isValid())
-	{
-		setPixel(x, y, color.red(), color.green(), color.blue(), color.alpha());
-	}
-}
-
-bool ViewerWidget::isInside(int x, int y)
-{
-	return img && x >= 0 && y >= 0 && x < img->width() && y < img->height();
-}
-
-//Draw functions
-void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
-{
-	if(!img || !data) return;
-
-	if(algType == 0)
-	{
-		drawLineDDA(start, end, color);
-	}
-	else
-	{
-		drawLineBresenham(start, end, color);
-	}
-	update();
-}
-
-void ViewerWidget::drawPolygon(QColor color, int algType)
-{
-	if(isEmpty())
+	if((start.x() == end.x()) && (start.y() == end.y()))					// dx/dy == 0/0
 		return;
 
-	img->fill(Qt::white);
+	int dx = end.x() - start.x();
+	int dy = end.y() - start.y();
 
-	if(transformedVert.size() > 2)																																	// Polygon
+	int steps = qMax(qAbs(dx), qAbs(dy));
+
+	float xInc = dx / (float) steps;
+	float yInc = dy / (float) steps;
+
+	float x = start.x();
+	float y = start.y();
+
+	for(int idx = 0; idx < steps; idx++)
 	{
-		QVector <QPoint> clippedPoints = clippingPolygon();
-
-		if(clippedPoints.size() > 1)																																	// whole/clipped polygon is inside clipping area
-		{
-			if(clippedPoints.size() == 3)																// change this maybe because it'll fill clipped polygon(vertices > 3) too
-				scanLineTriangle(clippedPoints, color);
-			else
-				scanLine(clippedPoints, color);
-
-			for(qsizetype i = 1; i < clippedPoints.size(); i++)
-				drawLine(clippedPoints[i - 1], clippedPoints[i], color, algType);
-
-			drawLine(clippedPoints.back(), clippedPoints[0], color, algType);
-		}
-	}
-	else if(transformedVert.size() == 2)																															//Line
-	{
-		QVector<QPoint> clippedPoints = clippingLine();
-		if(clippedPoints.size() > 1)																																		// line must be clipped
-			drawLine(clippedPoints[0], clippedPoints[1], color, algType);
+		x += xInc;
+		y += yInc;
+		setPixel(x + 0.5f, y + 0.5f, color);
 	}
 }
+void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
+{
+	if(qAbs(end.y() - start.y()) < qAbs(end.x() - start.x()))			// dy < dx -> 0<m<1 or -1<m<0
+	{
+		if(start.x() > end.x())																			// x0 > x1
+			swapPoints(start, end);
 
+		int dx = end.x() - start.x();
+		int dy = end.y() - start.y();
+
+		int yInc = 1;
+		if(dy < 0)
+		{
+			dy = -dy;
+			yInc = -1;
+		}
+
+		int k1 = 2 * dy;
+		int k2 = 2 * dy - 2 * dx;
+		int p = 2 * dy - dx;
+
+		int x = start.x();
+		int y = start.y();
+
+		while(x < end.x())
+		{
+			x += 1;
+
+			if(p > 0)
+			{
+				y += yInc;
+				p += k2;
+			}
+			else
+				p += k1;
+
+			setPixel(x, y, color);
+		}
+	}
+	else																											// dy > dx -> m > 1 or m < -1
+	{
+		if(start.y() > end.y())																	// y0 > y1
+			swapPoints(start, end);
+
+		int dx = end.x() - start.x();
+		int dy = end.y() - start.y();
+
+		int xInc = 1;
+		if(dx < 0)
+		{
+			dx = -dx;
+			xInc = -1;
+		}
+
+		int k1 = 2 * dx;
+		int k2 = 2 * dx - 2 * dy;
+		int p = 2 * dx - dy;
+
+		int x = start.x();
+		int y = start.y();
+
+		while(y < end.y())
+		{
+			y += 1;
+
+			if(p > 0)
+			{
+				x += xInc;
+				p += k2;
+			}
+			else
+				p += k1;
+
+			setPixel(x, y, color);
+		}
+	}
+}
+// Circle rasterization
+void ViewerWidget::drawCircleBresenham(QPoint center, QPoint end, QColor color)
+{
+	int radius = std::sqrt(std::powl(end.x() - center.x(), 2) + std::pow(end.y() - center.y(), 2)) + 0.5f;
+	int p = 1 - radius;
+
+	int twoX = 3;
+	int twoY = 2 * radius - 2;
+
+	int x = 0;
+	int y = radius;
+
+	while(x <= y)
+	{
+		drawCirclePoints(center.x(), center.y(), x, y, color);
+
+		if(p > 0)
+		{
+			p -= twoY;
+			y--;
+			twoY -= 2;
+		}
+		p += twoX;
+		twoX += 2;
+		x++;
+	}
+}
+void ViewerWidget::drawCircle(QColor color)
+{
+	if(!img || !data) return;
+
+	drawCircleBresenham(vertices[0], vertices[1], color);
+	update();
+}
+void ViewerWidget::drawCirclePoints(int xc, int yc, int x, int y, QColor color)
+{
+	setPixel(xc + x, yc + y, color);
+	setPixel(xc - x, yc + y, color);
+	setPixel(xc + x, yc - y, color);
+	setPixel(xc - x, yc - y, color);
+	setPixel(xc + y, yc + x, color);
+	setPixel(xc - y, yc + x, color);
+	setPixel(xc + y, yc - x, color);
+	setPixel(xc - y, yc - x, color);
+}
+// Clipping
+QVector<QPoint> ViewerWidget::clippingPolygon()
+{
+	QVector<QPoint> tempPoints = transformedVert;
+	QVector<QPoint> clippedPoints;
+
+	int xMin[]{0, -(img->height() - 1), -(img->width() - 1), 0}; // need to decrement - axis goes from 0 to height/weight - 1)
+
+	int turns = 0;
+	while(turns < 4)
+	{
+		if(tempPoints.isEmpty()) // whole polygone outside clipping area
+			break;
+
+		QPoint S(tempPoints.back());
+		for(qsizetype i = 0; i < tempPoints.size(); i++)
+		{
+			QPoint V = tempPoints[i];
+
+			if(V.x() >= xMin[turns])
+			{
+				if(S.x() >= xMin[turns])
+					clippedPoints.push_back(V);
+				else
+				{
+					clippedPoints.push_back(QPoint(xMin[turns], S.y() + ((xMin[turns] - S.x()) / (double) (V.x() - S.x())) * (V.y() - S.y()) + 0.5));
+					clippedPoints.push_back(V);
+				}
+			}
+			else
+				if(S.x() >= xMin[turns])
+					clippedPoints.push_back(QPoint(xMin[turns], S.y() + ((xMin[turns] - S.x()) / (double) (V.x() - S.x())) * (V.y() - S.y()) + 0.5));
+
+			S = V;
+		}
+		tempPoints = clippedPoints;
+		clippedPoints.clear();
+		for(qsizetype i = 0; i < tempPoints.size(); i++)
+		{
+			int xRotated = -tempPoints[i].y();
+			int yRotated = tempPoints[i].x();
+			tempPoints[i].setX(xRotated);
+			tempPoints[i].setY(yRotated);
+		}
+		turns++;
+	}
+
+	return tempPoints;
+}
+QVector<QPoint> ViewerWidget::clippingLine()
+{
+	QVector<QPoint> viewerWidgetEdges;
+	viewerWidgetEdges.push_back(QPoint(0, 0));
+	viewerWidgetEdges.push_back(QPoint(0, img->height()));
+	viewerWidgetEdges.push_back(QPoint(img->width(), img->height()));
+	viewerWidgetEdges.push_back(QPoint(img->width(), 0));
+
+	double tL = 0.0;
+	double tU = 1.0;
+	QPoint d(transformedVert[1].x() - transformedVert[0].x(), transformedVert[1].y() - transformedVert[0].y());
+
+	qsizetype i = 0;
+	while(i < viewerWidgetEdges.size())
+	{
+		QPoint normal;
+		if(i == viewerWidgetEdges.size() - 1) // upper edge
+		{
+			normal.setX(viewerWidgetEdges.back().y() - viewerWidgetEdges.front().y());
+			normal.setY(-(viewerWidgetEdges.back().x() - viewerWidgetEdges.front().x()));
+		}
+		else // other edges
+		{
+			normal.setX(viewerWidgetEdges[i + 1].y() - viewerWidgetEdges[i].y());
+			normal.setY(-(viewerWidgetEdges[i + 1].x() - viewerWidgetEdges[i].x()));
+		}
+		QPoint w(transformedVert[0].x() - viewerWidgetEdges[i].x(), transformedVert[0].y() - viewerWidgetEdges[i].y());
+
+		int dn = d.x() * normal.x() + d.y() * normal.y();
+		int wn = w.x() * normal.x() + w.y() * normal.y();
+
+		double t = -wn / (double) dn;
+
+		if(dn != 0)
+		{
+			if(dn > 0 && t <= 1)
+				tL = qMax(t, tL);
+			else if(dn < 0 && t >= 0)
+				tU = qMax(t, tU);
+		}
+		i++;
+	}
+
+	if(tL == 0.0 && tU == 1.0)
+	{
+		if(!(transformedVert[0].x() <= img->width() && transformedVert[0].x() >= 0 && transformedVert[0].y() <= img->height() && transformedVert[0].y() >= 0))
+			return transformedVert;
+	}
+	else if(tL > 0 && tL < 1 && tU > 0 && tU < 1)
+	{
+		QVector<QPoint> clippedPoints;
+		clippedPoints.push_back(QPoint(transformedVert[0].x() + (transformedVert[1].x() - transformedVert[0].x()) * tL + 0.5, transformedVert[0].y() + (transformedVert[1].y() - transformedVert[0].y()) * tL + 0.5));
+		clippedPoints.push_back(QPoint(transformedVert[0].x() + (transformedVert[1].x() - transformedVert[0].x()) * tU + 0.5, transformedVert[0].y() + (transformedVert[1].y() - transformedVert[0].y()) * tU + 0.5));
+		return clippedPoints;
+	}
+
+	return transformedVert;
+}
+// Filling
 void ViewerWidget::scanLine(const QVector <QPoint>& nodes, const QColor& color)
 {
 	if(nodes.isEmpty())
@@ -292,7 +402,7 @@ void ViewerWidget::scanLine(const QVector <QPoint>& nodes, const QColor& color)
 		{
 			qDebug() << QString("x: %1, dy : %2, w : %3").arg(edge.x).arg(edge.dy).arg(edge.w);
 		}
-	qDebug() << "\n";
+		qDebug() << "\n";
 #endif
 		for(qsizetype j = 0; j + 1 < activeEdges.size(); j += 2)
 		{
@@ -321,321 +431,161 @@ void ViewerWidget::scanLine(const QVector <QPoint>& nodes, const QColor& color)
 		y++;
 	}
 }
-
-void ViewerWidget::scanLineTriangle(const QVector <QPoint>& nodes, const QColor& color)
+void ViewerWidget::scanLineTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType)
 {
+	// 1. sort by y (ascending)
+	if(p1.y() < p0.y()) std::swap(p0, p1);
+	if(p2.y() < p0.y()) std::swap(p0, p2);
+	if(p2.y() < p1.y()) std::swap(p1, p2);
 
-}
+	// 2. now: p0.y <= p1.y <= p2.y
 
-QVector<QPoint> ViewerWidget::clippingLine()
-{
-	QVector<QPoint> viewerWidgetEdges;
-	viewerWidgetEdges.push_back(QPoint(0, 0));
-	viewerWidgetEdges.push_back(QPoint(0, img->height()));
-	viewerWidgetEdges.push_back(QPoint(img->width(), img->height()));
-	viewerWidgetEdges.push_back(QPoint(img->width(), 0));
-
-	double tL = 0.0;
-	double tU = 1.0;
-	QPoint d(transformedVert[1].x() - transformedVert[0].x(), transformedVert[1].y() - transformedVert[0].y());
-
-	qsizetype i = 0;
-	while(i < viewerWidgetEdges.size())
+	// handle special cases (aka sort by x (ascending))
+	if(p1.y() == p2.y())
 	{
-		QPoint normal;
-		if(i == viewerWidgetEdges.size() - 1) // upper edge
-		{
-			normal.setX(viewerWidgetEdges.back().y() - viewerWidgetEdges.front().y());
-			normal.setY(-(viewerWidgetEdges.back().x() - viewerWidgetEdges.front().x()));
-		}
-		else // other edges
-		{
-			normal.setX(viewerWidgetEdges[i + 1].y() - viewerWidgetEdges[i].y());
-			normal.setY(-(viewerWidgetEdges[i + 1].x() - viewerWidgetEdges[i].x()));
-		}
-		QPoint w(transformedVert[0].x() - viewerWidgetEdges[i].x(), transformedVert[0].y() - viewerWidgetEdges[i].y());
-
-		int dn = d.x() * normal.x() + d.y() * normal.y();
-		int wn = w.x() * normal.x() + w.y() * normal.y();
-
-		double t = -wn / (double) dn;
-
-		if(dn != 0)
-		{
-			if(dn > 0 && t <= 1)
-				tL = qMax(t, tL);
-			else if(dn < 0 && t >= 0)
-				tU = qMax(t, tU);
-		}
-		i++;
+		fillTopTriangle(p0, p1, p2, color, interpType, p0, p1, p2);
 	}
-
-	if(tL == 0.0 && tU == 1.0)
+	else if(p0.y() == p1.y())
 	{
-		if(!(transformedVert[0].x() <= img->width() && transformedVert[0].x() >= 0 && transformedVert[0].y() <= img->height() && transformedVert[0].y() >= 0))
-			return transformedVert;
+		fillBottomTriangle(p0, p1, p2, color, interpType, p0, p1, p2);
 	}
-	else if(tL > 0 && tL < 1 && tU > 0 && tU < 1)
-	{
-		QVector<QPoint> clippedPoints;
-		clippedPoints.push_back(QPoint(transformedVert[0].x() + (transformedVert[1].x() - transformedVert[0].x()) * tL + 0.5, transformedVert[0].y() + (transformedVert[1].y() - transformedVert[0].y()) * tL + 0.5));
-		clippedPoints.push_back(QPoint(transformedVert[0].x() + (transformedVert[1].x() - transformedVert[0].x()) * tU + 0.5, transformedVert[0].y() + (transformedVert[1].y() - transformedVert[0].y()) * tU + 0.5));
-		return clippedPoints;
-	}
-
-	return transformedVert;
-}
-
-QVector<QPoint> ViewerWidget::clippingPolygon()
-{
-	QVector<QPoint> tempPoints = transformedVert;
-	QVector<QPoint> clippedPoints;
-
-	int xMin[]{0, -(img->height() - 1), -(img->width() - 1), 0}; // need to decrement - axis goes from 0 to height/weight - 1)
-
-	int turns = 0;
-	while(turns < 4)
-	{
-		if(tempPoints.isEmpty()) // whole polygone outside clipping area
-			break;
-
-		QPoint S(tempPoints.back());
-		for(qsizetype i = 0; i < tempPoints.size(); i++)
-		{
-			QPoint V = tempPoints[i];
-
-			if(V.x() >= xMin[turns])
-			{
-				if(S.x() >= xMin[turns])
-					clippedPoints.push_back(V);
-				else
-				{
-					clippedPoints.push_back(QPoint(xMin[turns], S.y() + ((xMin[turns] - S.x()) / (double) (V.x() - S.x())) * (V.y() - S.y()) + 0.5));
-					clippedPoints.push_back(V);
-				}
-			}
-			else
-				if(S.x() >= xMin[turns])
-					clippedPoints.push_back(QPoint(xMin[turns], S.y() + ((xMin[turns] - S.x()) / (double) (V.x() - S.x())) * (V.y() - S.y()) + 0.5));
-
-			S = V;
-		}
-		tempPoints = clippedPoints;
-		clippedPoints.clear();
-		for(qsizetype i = 0; i < tempPoints.size(); i++)
-		{
-			int xRotated = -tempPoints[i].y();
-			int yRotated = tempPoints[i].x();
-			tempPoints[i].setX(xRotated);
-			tempPoints[i].setY(yRotated);
-		}
-		turns++;
-	}
-
-	return tempPoints;
-}
-
-void ViewerWidget::drawCircle(QColor color)
-{
-	if(!img || !data) return;
-
-	drawCircleBresenham(vertices[0], vertices[1], color);
-	update();
-}
-
-void ViewerWidget::clear()
-{
-	if(!img) return;
-	img->fill(Qt::white);
-
-	if(!vertices.isEmpty())
-		vertices.clear();
-
-	if(!transformedVert.isEmpty())
-		transformedVert.clear();
-
-	drawActivated = false;
-
-	update();
-}
-
-void ViewerWidget::clearVertices()
-{
-	if(vertices.size() > 0)
-		vertices.clear();
-}
-
-void ViewerWidget::push_backVertex(QPoint point)
-{
-	vertices.push_back(point);
-}
-
-QPoint ViewerWidget::backVertex()
-{
-	if(vertices.size() > 0)
-		return vertices.back();
 	else
-		return QPoint(0, 0);
-}
-
-QPoint ViewerWidget::firstVertex()
-{
-	if(vertices.size() > 0)
-		return vertices.front();
-	else
-		return QPoint(0, 0);
-}
-
-void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
-{
-	if((start.x() == end.x()) && (start.y() == end.y()))					// dx/dy == 0/0
-		return;
-
-	int dx = end.x() - start.x();
-	int dy = end.y() - start.y();
-
-	int steps = qMax(qAbs(dx), qAbs(dy));
-
-	float xInc = dx / (float) steps;
-	float yInc = dy / (float) steps;
-
-	float x = start.x();
-	float y = start.y();
-
-	for(int idx = 0; idx < steps; idx++)
 	{
-		x += xInc;
-		y += yInc;
-		setPixel(x + 0.5f, y + 0.5f, color);
-	}
-}
+	// 3. split triangle
 
-void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
-{
-	if(qAbs(end.y() - start.y()) < qAbs(end.x() - start.x()))			// dy < dx -> 0<m<1 or -1<m<0
-	{
-		if(start.x() > end.x())																			// x0 > x1
-			swapPoints(start, end);
+		double alpha = (double) (p2.x() - p0.x()) / (p2.y() - p0.y());
 
-		int dx = end.x() - start.x();
-		int dy = end.y() - start.y();
+		int px = p0.x() + alpha * (p1.y() - p0.y()) + 0.5;
+		QPoint P(px, p1.y());
 
-		int yInc = 1;
-		if(dy < 0)
+		// Decide left/right
+		if(p1.x() < P.x())
 		{
-			dy = -dy;
-			yInc = -1;
+			fillTopTriangle(p0, p1, P, color, interpType, p0, p1, p2);
+			fillBottomTriangle(p1, P, p2, color, interpType, p0, p1, p2);
 		}
-
-		int k1 = 2 * dy;
-		int k2 = 2 * dy - 2 * dx;
-		int p = 2 * dy - dx;
-
-		int x = start.x();
-		int y = start.y();
-
-		while(x < end.x())
+		else
 		{
-			x += 1;
-
-			if(p > 0)
-			{
-				y += yInc;
-				p += k2;
-			}
-			else
-				p += k1;
-
-			setPixel(x, y, color);
-		}
-	}
-	else																											// dy > dx -> m > 1 or m < -1
-	{
-		if(start.y() > end.y())																	// y0 > y1
-			swapPoints(start, end);
-
-		int dx = end.x() - start.x();
-		int dy = end.y() - start.y();
-
-		int xInc = 1;
-		if(dx < 0)
-		{
-			dx = -dx;
-			xInc = -1;
-		}
-
-		int k1 = 2 * dx;
-		int k2 = 2 * dx - 2 * dy;
-		int p = 2 * dx - dy;
-
-		int x = start.x();
-		int y = start.y();
-
-		while(y < end.y())
-		{
-			y += 1;
-
-			if(p > 0)
-			{
-				x += xInc;
-				p += k2;
-			}
-			else
-				p += k1;
-
-			setPixel(x, y, color);
+			fillTopTriangle(p0, P, p1, color, interpType, p0, p1, p2);
+			fillBottomTriangle(P, p1, p2, color, interpType, p0, p1, p2);
 		}
 	}
 }
-
-void ViewerWidget::drawCircleBresenham(QPoint center, QPoint end, QColor color)
+void ViewerWidget::fillTopTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2)								//p0 -> p1/P -> P/p1
 {
-	int radius = std::sqrt(std::powl(end.x() - center.x(), 2) + std::pow(end.y() - center.y(), 2)) + 0.5f;
-	int p = 1 - radius;
+	double w1 = (p1.x() - p0.x()) / (double) (p1.y() - p0.y());
+	double w2 = (p2.x() - p0.x()) / (double) (p2.y() - p0.y());
 
-	int twoX = 3;
-	int twoY = 2 * radius - 2;
+	int y = p0.y();										
+	int ymax = p2.y();								// same as p1.y()
+	double x1 = p0.x();								
+	double x2 = p0.x();								
 
-	int x = 0;
-	int y = radius;
-
-	while(x <= y)
+	while(y <= ymax)
 	{
-		drawCirclePoints(center.x(), center.y(), x, y, color);
-
-		if(p > 0)
+		int xStart = qCeil(qMin(x1, x2));
+		int xEnd = qFloor(qMax(x1, x2));
+		while(xStart <= xEnd)
 		{
-			p -= twoY;
-			y--;
-			twoY -= 2;
+			QPoint p(xStart, y);
+			QColor colorAlg = color;
+			if(interpType == 1)
+				colorAlg = nearestNeighbor(p, t0, t1, t2, QColor("green"), QColor("red"), QColor("blue"));
+			else if(interpType == 2)
+				colorAlg = barycentricInterp(p, t0, t1, t2, QColor("yellow"), QColor("purple"), QColor("brown"));
+			setPixel(p.x(), p.y(), colorAlg);
+			xStart++;
 		}
-		p += twoX;
-		twoX += 2;
-		x++;
+
+		x1 += w1;
+		x2 += w2;
+		y++;
 	}
 }
+void ViewerWidget::fillBottomTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2)						//P/p1 -> p1/P -> p2
+{	
+	double w1 = (p2.x() - p0.x()) / (double) (p2.y() - p0.y());
+	double w2 = (p2.x() - p1.x()) / (double) (p2.y() - p1.y());
 
-void ViewerWidget::drawCirclePoints(int xc, int yc, int x, int y, QColor color)
-{
-	setPixel(xc + x, yc + y, color);
-	setPixel(xc - x, yc + y, color);
-	setPixel(xc + x, yc - y, color);
-	setPixel(xc - x, yc - y, color);
-	setPixel(xc + y, yc + x, color);
-	setPixel(xc - y, yc + x, color);
-	setPixel(xc + y, yc - x, color);
-	setPixel(xc - y, yc - x, color);
+	int y = p0.y();										// same as p1.y()
+	int ymax = p2.y();
+	double x1 = p0.x();
+	double x2 = p1.x();
+
+	while(y < ymax)
+	{
+		int xStart = qCeil(qMin(x1, x2));
+		int xEnd = qFloor(qMax(x1, x2));
+		while(xStart <= xEnd)
+		{
+			QPoint p(xStart, y);
+			QColor colorAlg = color;
+			if(interpType == 1)
+				colorAlg = nearestNeighbor(p, t0, t1, t2, QColor("green"), QColor("red"), QColor("blue"));
+			else if(interpType == 2)
+				colorAlg = barycentricInterp(p, t0, t1, t2, QColor("yellow"), QColor("purple"), QColor("brown"));
+			setPixel(p.x(), p.y(), colorAlg);
+			xStart++;
+		}
+
+		x1 += w1;
+		x2 += w2;
+		y++;
+	}
 }
-
-void ViewerWidget::swapPoints(QPoint& start, QPoint& end)
+QColor ViewerWidget::nearestNeighbor(const QPoint& p, const QPoint& t0, const QPoint& t1, const QPoint& t2, QColor c0, QColor c1, QColor c2)
 {
-	QPoint temp = start;
-	start = end;
-	end = temp;
+    int dx0 = p.x() - t0.x();
+    int dy0 = p.y() - t0.y();
+    int d0 = dx0*dx0 + dy0*dy0;
+
+    int dx1 = p.x() - t1.x();
+    int dy1 = p.y() - t1.y();
+    int d1 = dx1*dx1 + dy1*dy1;
+
+    int dx2 = p.x() - t2.x();
+    int dy2 = p.y() - t2.y();
+    int d2 = dx2*dx2 + dy2*dy2;
+
+    if (d0 <= d1 && d0 <= d2) return c0;
+    if (d1 <= d0 && d1 <= d2) return c1;
+    return c2;
 }
+QColor ViewerWidget::barycentricInterp(const QPoint& p, const QPoint& t0, const QPoint& t1, const QPoint& t2, QColor c0, QColor c1, QColor c2)
+{
+    // celkova plocha trojuholnika T0,T1,T2
+    double A = abs((t1.x() - t0.x()) * (t2.y() - t0.y()) -
+                   (t1.y() - t0.y()) * (t2.x() - t0.x())) / 2.0;
 
-//Transformations
+    // plochy podtrojuholnikov s bodom P(x,y)
+    double A0 = abs((t1.x() - p.x()) * (t2.y() - p.y()) -
+                    (t1.y() - p.y()) * (t2.x() - p.x())) / 2.0;
 
+    double A1 = abs((t0.x() - p.x()) * (t2.y() - p.y()) -
+                    (t0.y() - p.y()) * (t2.x() - p.x())) / 2.0;
+
+    double A2 = A - A0 - A1; // tretia plocha (aby sme nemuseli pocitat znova)
+
+    // vahy (barycentricke suradnice)
+    double l0 = A0 / A;
+    double l1 = A1 / A;
+    double l2 = A2 / A;
+
+    // interpolacia farby
+    int r = (int)(l0 * c0.red() + l1 * c1.red() + l2 * c2.red());
+    int g = (int)(l0 * c0.green() + l1 * c1.green() + l2 * c2.green());
+    int b = (int)(l0 * c0.blue() + l1 * c1.blue() + l2 * c2.blue());
+
+    // orezanie na rozsah 0255
+    r = qBound(0, r, 255);
+    g = qBound(0, g, 255);
+    b = qBound(0, b, 255);
+
+    return QColor(r, g, b);
+}
+/* Algorithms */
+
+/* Transformations */
 void ViewerWidget::translation(QPoint currentMousePos)
 {
 	if(transformedVert.isEmpty())
@@ -653,7 +603,6 @@ void ViewerWidget::translation(QPoint currentMousePos)
 	lastMousePos = currentMousePos;
 	update();
 }
-
 void ViewerWidget::rotate(double angle)
 {
 	double rad = angle * M_PI / 180.0;
@@ -666,7 +615,6 @@ void ViewerWidget::rotate(double angle)
 		transformedVert[i].setY(y);
 	}
 }
-
 void ViewerWidget::scale(double factorX, double factorY)
 {
 	if(transformedVert.isEmpty())
@@ -680,7 +628,6 @@ void ViewerWidget::scale(double factorX, double factorY)
 		transformedVert[i].setY(y);
 	}
 }
-
 void ViewerWidget::shear(double factorX)
 {
 	if(transformedVert.isEmpty())
@@ -694,7 +641,6 @@ void ViewerWidget::shear(double factorX)
 		transformedVert[i].setY(transformedVert[i].y());
 	}
 }
-
 void ViewerWidget::symmetry()
 {
 	if(transformedVert.isEmpty())
@@ -742,6 +688,199 @@ void ViewerWidget::symmetry()
 			transformedVert[1].setX(x);
 		}
 	}
+}
+/* Transformations */
+
+// Drawing call functions
+void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
+{
+	if(!img || !data) return;
+
+	if(algType == 0)
+	{
+		drawLineDDA(start, end, color);
+	}
+	else
+	{
+		drawLineBresenham(start, end, color);
+	}
+	update();
+}
+void ViewerWidget::drawPolygon(QColor color, int algType, int interpType)
+{
+	if(isEmpty())
+		return;
+
+	img->fill(Qt::white);
+
+	if(transformedVert.size() > 2)																																	// Polygon
+	{
+		QVector <QPoint> clippedPoints = clippingPolygon();
+
+		if(clippedPoints.size() > 1)																																	// whole/clipped polygon is inside clipping area
+		{
+			if(areaIsFilled)
+			{
+				if(clippedPoints.size() == 3)																// change this maybe because it'll fill clipped polygon(vertices > 3) too
+					scanLineTriangle(clippedPoints[0], clippedPoints[1], clippedPoints[2], color, interpType);
+				else
+					scanLine(clippedPoints, color);
+			}
+
+			for(qsizetype i = 1; i < clippedPoints.size(); i++)
+				drawLine(clippedPoints[i - 1], clippedPoints[i], color, algType);
+
+			drawLine(clippedPoints.back(), clippedPoints[0], color, algType);
+		}
+	}
+	else if(transformedVert.size() == 2)																															// line
+	{
+		QVector<QPoint> clippedPoints = clippingLine();
+		if(clippedPoints.size() > 1)																																		// line must be clipped
+			drawLine(clippedPoints[0], clippedPoints[1], color, algType);
+	}
+}
+
+bool ViewerWidget::setImage(const QImage& inputImg)
+{
+	if(img)
+	{
+		delete img;
+		img = nullptr;
+		data = nullptr;
+	}
+	img = new QImage(inputImg.convertToFormat(QImage::Format_ARGB32));
+	if(!img || img->isNull())
+	{
+		return false;
+	}
+	resizeWidget(img->size());
+	setDataPtr();
+	update();
+
+	return true;
+}
+bool ViewerWidget::isEmpty()
+{
+	if(img == nullptr)
+	{
+		return true;
+	}
+
+	if(img->size() == QSize(0, 0))
+	{
+		return true;
+	}
+	return false;
+}
+
+bool ViewerWidget::changeSize(int width, int height)
+{
+	QSize newSize(width, height);
+
+	if(newSize != QSize(0, 0))
+	{
+		if(img != nullptr)
+		{
+			delete img;
+		}
+
+		img = new QImage(newSize, QImage::Format_ARGB32);
+		if(!img || img->isNull())
+		{
+			return false;
+		}
+		img->fill(Qt::white);
+		resizeWidget(img->size());
+		setDataPtr();
+		update();
+	}
+
+	return true;
+}
+
+// Set pixel
+void ViewerWidget::setPixel(int x, int y, int r, int g, int b, int a)
+{
+	if(!img || !data) return;
+	if(!isInside(x, y)) return;
+
+	r = r > 255 ? 255 : (r < 0 ? 0 : r);
+	g = g > 255 ? 255 : (g < 0 ? 0 : g);
+	b = b > 255 ? 255 : (b < 0 ? 0 : b);
+	a = a > 255 ? 255 : (a < 0 ? 0 : a);
+
+	size_t startbyte = y * img->bytesPerLine() + x * 4;
+	data[startbyte] = static_cast<uchar>(b);
+	data[startbyte + 1] = static_cast<uchar>(g);
+	data[startbyte + 2] = static_cast<uchar>(r);
+	data[startbyte + 3] = static_cast<uchar>(a);
+}
+void ViewerWidget::setPixel(int x, int y, double valR, double valG, double valB, double valA)
+{
+	valR = valR > 1 ? 1 : (valR < 0 ? 0 : valR);
+	valG = valG > 1 ? 1 : (valG < 0 ? 0 : valG);
+	valB = valB > 1 ? 1 : (valB < 0 ? 0 : valB);
+	valA = valA > 1 ? 1 : (valA < 0 ? 0 : valA);
+
+	setPixel(x, y, static_cast<int>(255 * valR + 0.5), static_cast<int>(255 * valG + 0.5), static_cast<int>(255 * valB + 0.5), static_cast<int>(255 * valA + 0.5));
+}
+void ViewerWidget::setPixel(int x, int y, const QColor& color)
+{
+	if(color.isValid())
+	{
+		setPixel(x, y, color.red(), color.green(), color.blue(), color.alpha());
+	}
+}
+
+// Other
+void ViewerWidget::swapPoints(QPoint& start, QPoint& end)
+{
+	QPoint temp = start;
+	start = end;
+	end = temp;
+}
+bool ViewerWidget::isInside(int x, int y)
+{
+	return img && x >= 0 && y >= 0 && x < img->width() && y < img->height();
+}
+void ViewerWidget::clear()
+{
+	if(!img) return;
+	img->fill(Qt::white);
+
+	if(!vertices.isEmpty())
+		vertices.clear();
+
+	if(!transformedVert.isEmpty())
+		transformedVert.clear();
+
+	drawActivated = false;
+
+	update();
+}
+void ViewerWidget::clearVertices()
+{
+	if(vertices.size() > 0)
+		vertices.clear();
+}
+void ViewerWidget::push_backVertex(QPoint point)
+{
+	vertices.push_back(point);
+}
+QPoint ViewerWidget::backVertex()
+{
+	if(vertices.size() > 0)
+		return vertices.back();
+	else
+		return QPoint(0, 0);
+}
+QPoint ViewerWidget::firstVertex()
+{
+	if(vertices.size() > 0)
+		return vertices.front();
+	else
+		return QPoint(0, 0);
 }
 
 //Slots
