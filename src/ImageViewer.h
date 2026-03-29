@@ -41,6 +41,7 @@ private:
 	bool saveImage(QString filename);
 
 	void clearCanvas();
+	void uiAccessibility(bool state);
 
 private slots:
 	void on_actionOpen_triggered();

@@ -4,7 +4,7 @@ ImageViewer::ImageViewer(QWidget* parent)
 	: QMainWindow(parent), ui(new Ui::ImageViewerClass)
 {
 	ui->setupUi(this);
-	vW = new ViewerWidget(QSize(600,600), ui->scrollArea);
+	vW = new ViewerWidget(QSize(600, 600), ui->scrollArea);
 	ui->scrollArea->setWidget(vW);
 
 	QSizePolicy policy = ui->scrollArea->sizePolicy();
@@ -28,7 +28,8 @@ ImageViewer::ImageViewer(QWidget* parent)
 // Event filters
 bool ImageViewer::eventFilter(QObject* obj, QEvent* event)
 {
-	if (obj->objectName() == "ViewerWidget") {
+	if(obj->objectName() == "ViewerWidget")
+	{
 		return ViewerWidgetEventFilter(obj, event);
 	}
 	return QMainWindow::eventFilter(obj, event);
@@ -39,26 +40,33 @@ bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event)
 {
 	ViewerWidget* w = static_cast<ViewerWidget*>(obj);
 
-	if (!w) {
+	if(!w)
+	{
 		return false;
 	}
 
-	if (event->type() == QEvent::MouseButtonPress) {
+	if(event->type() == QEvent::MouseButtonPress)
+	{
 		ViewerWidgetMouseButtonPress(w, event);
 	}
-	else if (event->type() == QEvent::MouseButtonRelease) {
+	else if(event->type() == QEvent::MouseButtonRelease)
+	{
 		ViewerWidgetMouseButtonRelease(w, event);
 	}
-	else if (event->type() == QEvent::MouseMove) {
+	else if(event->type() == QEvent::MouseMove)
+	{
 		ViewerWidgetMouseMove(w, event);
 	}
-	else if (event->type() == QEvent::Leave) {
+	else if(event->type() == QEvent::Leave)
+	{
 		ViewerWidgetLeave(w, event);
 	}
-	else if (event->type() == QEvent::Enter) {
+	else if(event->type() == QEvent::Enter)
+	{
 		ViewerWidgetEnter(w, event);
 	}
-	else if (event->type() == QEvent::Wheel) {
+	else if(event->type() == QEvent::Wheel)
+	{
 		ViewerWidgetWheel(w, event);
 	}
 
@@ -71,47 +79,42 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 
 	if(e->button() == Qt::LeftButton)
 	{
-		if(w->getDrawActivated())
+		if(w->getDrawActivated())																															// start of drawing
 		{
-			// Disable ui
-			ui->pushButtonSetColor->setEnabled(false);
-			ui->comboBoxFigure->setEnabled(false);
-			ui->comboBoxLineAlg->setEnabled(false);
-			ui->pushButtonClear->setEnabled(false);
-			ui->actionClear->setEnabled(false);
-			ui->groupBox_3->setEnabled(false);
-
-			w->push_backVertex(e->pos());
+			uiAccessibility(false);																															// disable interface
+			w->push_backVertex(e->pos());																												// add a vertex of polygon/line or circle
+			w->setPixel(e->pos().x(), e->pos().y(), globalColor);																// set pixel of each vertex
+			w->update();
 		}
-		else if (!w->getDragging())
+		else if(!w->getDragging())																														// enable moving
 		{
 			w->setDragging(true);
 			w->setLastMousePos(e->pos());
 		}
-		else
+		else																																									// disable moving
 			w->setDragging(false);
 	}
 
 	else if(e->button() == Qt::RightButton && w->sizeVertex() > 0)
 	{
-		// First right click finishes drawing
-		if (w->getDrawActivated())
+		if(w->getDrawActivated())																															// first right click finishes drawing
 		{
-			vW->initTransfVert(); // initialize transformed vertices with original
-			vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+			if(ui->comboBoxFigure->currentIndex() == 0)
+			{
+				vW->initTransfVert();																															// initialize transformed vertices with original
+				vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex());
+			}
+			else if(ui->comboBoxFigure->currentIndex() == 1 && w->sizeVertex() == 2)						// draw circle
+				w->drawCircle(globalColor);
+
+			uiAccessibility(true); // Unable interface
 			w->setDrawActivated(false);
-			ui->pushButtonSetColor->setEnabled(true);
-			ui->comboBoxFigure->setEnabled(true);
-			ui->comboBoxLineAlg->setEnabled(true);
-			ui->pushButtonClear->setEnabled(true);
-			ui->actionClear->setEnabled(true);
-			ui->groupBox_3->setEnabled(true);
 		}
-		// Second right click clears the canvas
-		else
+
+		else																																									// second right click clears the canvas
 		{
 			w->setDragging(false);
-			clearCanvas(); // clear whole canvas on right button click (after finished drawing)
+			clearCanvas();																																			// clear whole canvas on right button click (after finished drawing)
 		}
 	}
 }
@@ -155,11 +158,12 @@ void ImageViewer::ViewerWidgetEnter(ViewerWidget* w, QEvent* event)
 //ImageViewer Events
 void ImageViewer::closeEvent(QCloseEvent* event)
 {
-	if (QMessageBox::Yes == QMessageBox::question(this, "Close Confirmation", "Are you sure you want to exit?", QMessageBox::Yes | QMessageBox::No))
+	if(QMessageBox::Yes == QMessageBox::question(this, "Close Confirmation", "Are you sure you want to exit?", QMessageBox::Yes | QMessageBox::No))
 	{
 		event->accept();
 	}
-	else {
+	else
+	{
 		event->ignore();
 	}
 }
@@ -168,7 +172,8 @@ void ImageViewer::closeEvent(QCloseEvent* event)
 bool ImageViewer::openImage(QString filename)
 {
 	QImage loadedImg(filename);
-	if (!loadedImg.isNull()) {
+	if(!loadedImg.isNull())
+	{
 		return vW->setImage(loadedImg);
 	}
 	return false;
@@ -189,12 +194,16 @@ void ImageViewer::on_actionOpen_triggered()
 
 	QString fileFilter = "Image data (*.bmp *.gif *.jpg *.jpeg *.png *.pbm *.pgm *.ppm *.xbm *.xpm);;All files (*)";
 	QString fileName = QFileDialog::getOpenFileName(this, "Load image", folder, fileFilter);
-	if (fileName.isEmpty()) { return; }
+	if(fileName.isEmpty())
+	{
+		return;
+	}
 
 	QFileInfo fi(fileName);
 	settings.setValue("folder_img_load_path", fi.absoluteDir().absolutePath());
 
-	if (!openImage(fileName)) {
+	if(!openImage(fileName))
+	{
 		msgBox.setText("Unable to open image.");
 		msgBox.setIcon(QMessageBox::Warning);
 		msgBox.exec();
@@ -206,15 +215,18 @@ void ImageViewer::on_actionSave_as_triggered()
 
 	QString fileFilter = "Image data (*.bmp *.gif *.jpg *.jpeg *.png *.pbm *.pgm *.ppm *.xbm *.xpm);;All files (*)";
 	QString fileName = QFileDialog::getSaveFileName(this, "Save image", folder, fileFilter);
-	if (!fileName.isEmpty()) {
+	if(!fileName.isEmpty())
+	{
 		QFileInfo fi(fileName);
 		settings.setValue("folder_img_save_path", fi.absoluteDir().absolutePath());
 
-		if (!saveImage(fileName)) {
+		if(!saveImage(fileName))
+		{
 			msgBox.setText("Unable to save image.");
 			msgBox.setIcon(QMessageBox::Warning);
 		}
-		else {
+		else
+		{
 			msgBox.setText(QString("File %1 saved.").arg(fileName));
 			msgBox.setIcon(QMessageBox::Information);
 		}
@@ -247,7 +259,8 @@ void ImageViewer::on_actionExit_triggered()
 void ImageViewer::on_pushButtonSetColor_clicked()
 {
 	QColor newColor = QColorDialog::getColor(globalColor, this);
-	if (newColor.isValid()) {
+	if(newColor.isValid())
+	{
 		QString style_sheet = QString("background-color: %1;").arg(newColor.name(QColor::HexRgb));
 		ui->pushButtonSetColor->setStyleSheet(style_sheet);
 		globalColor = newColor;
@@ -255,8 +268,8 @@ void ImageViewer::on_pushButtonSetColor_clicked()
 }
 
 void ImageViewer::on_pushButtonRotate_clicked()
-{ 
-	if (vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
+{
+	if(vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
 		return;
 
 	vW->rotate(ui->rotateAngleSpinBox->value());
@@ -265,7 +278,7 @@ void ImageViewer::on_pushButtonRotate_clicked()
 
 void ImageViewer::on_pushButtonScale_clicked()
 {
-	if (vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
+	if(vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
 		return;
 
 	vW->scale(ui->xFactorScaleSpinBox->value(), ui->yFactorScaleSpinBox->value());
@@ -273,9 +286,19 @@ void ImageViewer::on_pushButtonScale_clicked()
 
 }
 
+void ImageViewer::uiAccessibility(bool state)
+{
+	ui->pushButtonSetColor->setEnabled(state);
+	ui->comboBoxFigure->setEnabled(state);
+	ui->comboBoxLineAlg->setEnabled(state);
+	ui->pushButtonClear->setEnabled(state);
+	ui->actionClear->setEnabled(state);
+	ui->groupBox_3->setEnabled(state);
+}
+
 void ImageViewer::on_pushButtonShear_clicked()
 {
-	if (vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
+	if(vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
 		return;
 
 	vW->shear(ui->shearSpinBox->value());
@@ -285,7 +308,7 @@ void ImageViewer::on_pushButtonShear_clicked()
 
 void ImageViewer::on_pushButtonSymmetry_clicked()
 {
-	if (vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
+	if(vW->isEmpty() || vW->sizeVertex() == 0 || vW->getDrawActivated())
 		return;
 
 	vW->symmetry();

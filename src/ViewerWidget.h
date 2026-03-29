@@ -3,6 +3,8 @@
 #include <cmath>
 #include <QtNumeric>
 
+#define DEBUG
+
 class ViewerWidget :public QWidget {
 	Q_OBJECT
 private:
@@ -39,7 +41,7 @@ public:
 //Draw functions
 	void drawLine(QPoint start, QPoint end, QColor color, int algType = 0);
 	void drawPolygon(QColor color, int algType);
-	void drawCircle(QPoint center, QPoint end, QColor color);
+	void drawCircle(QColor color);
 	void drawCirclePoints(int xc, int yc, int x, int y, QColor color);
 
 	//Clipping functions
@@ -57,13 +59,18 @@ public:
 	QPoint getLastMousePos() { return lastMousePos; }
 	void swapPoints(QPoint& start, QPoint& end);
 
-//Transformations
+// Transformations
 	void rotate(double angle);
 	void scale(double factorX, double factorY);
 	void shear(double factorX);
 	void symmetry();
 	void translation(QPoint currentPos);
 
+// Filling functions
+	void scanLine(const QVector <QPoint>& nodes, const QColor& color);
+	void scanLineTriangle(const QVector <QPoint>& nodes, const QColor& color);			// add interpolationType
+
+	// Vertices access functions
 	void clearVertices();
 	void push_backVertex(QPoint point);
 	QPoint backVertex();
@@ -71,7 +78,7 @@ public:
 	qsizetype sizeVertex() { return vertices.size(); };
 	void initTransfVert() { transformedVert = vertices; transformedVert.detach(); };
 
-	//Get/Set functions
+	// Get/Set functions
 	uchar* getData() { return data; }
 	void setDataPtr() { data = img ? img->bits() : nullptr; }
 
