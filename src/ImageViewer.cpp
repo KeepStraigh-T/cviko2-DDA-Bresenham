@@ -247,7 +247,10 @@ void ImageViewer::clearCanvas()
 {
 	vW->setDragging(false);
 	vW->setFilled(false);
+	ui->pushButtonFill->setEnabled(false);
 	ui->groupBox_3->setEnabled(false);
+	if(ui->pushButtonFill->isChecked())
+		ui->pushButtonFill->setChecked(false);
 	vW->clear();
 	vW->setDrawActivated(true);
 }
@@ -290,7 +293,6 @@ void ImageViewer::on_pushButtonScale_clicked()
 void ImageViewer::uiAccessibility(bool state)
 {
 	ui->pushButtonSetColor->setEnabled(state);
-	ui->comboBoxInterpAlg->setEnabled(state);
 	ui->comboBoxInterpAlg->setEnabled(state);
 	ui->pushButtonFill->setEnabled(state);
 	ui->comboBoxFigure->setEnabled(state);

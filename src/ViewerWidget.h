@@ -3,7 +3,7 @@
 #include <cmath>
 #include <QtNumeric>
 
-//#define DEBUG
+#define DEBUG
 
 class ViewerWidget :public QWidget {
 	Q_OBJECT
@@ -72,8 +72,8 @@ public:
 	void setFilled(bool state) { areaIsFilled = state; };
 	bool getFilled() { return areaIsFilled; };
 	void scanLine(const QVector <QPoint>& nodes, const QColor& color);
-	QColor nearestNeighbor(const QPoint& p, const QPoint& t0, const QPoint& t1, const QPoint& t2, QColor c0, QColor c1, QColor c2);
-	QColor barycentricInterp(const QPoint& p, const QPoint& t0, const QPoint& t1, const QPoint& t2, QColor c0, QColor c1, QColor c2);
+	QColor nearestNeighbor(int x, int y, const QPoint& t0, const QPoint& t1, const QPoint& t2);
+	QColor barycentricInterp(int x, int y, const QPoint& t0, const QPoint& t1, const QPoint& t2);
 	void scanLineTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType);
 	private: void fillBottomTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2);
 	private: void fillTopTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2);

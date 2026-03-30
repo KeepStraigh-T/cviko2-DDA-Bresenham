@@ -451,7 +451,7 @@ void ViewerWidget::scanLineTriangle(QPoint p0, QPoint p1, QPoint p2, const QColo
 	}
 	else
 	{
-	// 3. split triangle
+		// 3. split triangle
 
 		double alpha = (double) (p2.x() - p0.x()) / (p2.y() - p0.y());
 
@@ -476,34 +476,65 @@ void ViewerWidget::fillTopTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor
 	double w1 = (p1.x() - p0.x()) / (double) (p1.y() - p0.y());
 	double w2 = (p2.x() - p0.x()) / (double) (p2.y() - p0.y());
 
-	int y = p0.y();										
+	int y = p0.y();
 	int ymax = p2.y();								// same as p1.y()
-	double x1 = p0.x();								
-	double x2 = p0.x();								
+	double x1 = p0.x();
+	double x2 = p0.x();
+	
+	// do not need to compare x1 and x2 for minority (as in second function for bottom triangle) beacause x1 and x2 start in one point (vertex p0)
 
-	while(y <= ymax)
+	if(interpType == 1)
 	{
-		int xStart = qCeil(qMin(x1, x2));
-		int xEnd = qFloor(qMax(x1, x2));
-		while(xStart <= xEnd)
+		while(y < ymax)
 		{
-			QPoint p(xStart, y);
-			QColor colorAlg = color;
-			if(interpType == 1)
-				colorAlg = nearestNeighbor(p, t0, t1, t2, QColor("green"), QColor("red"), QColor("blue"));
-			else if(interpType == 2)
-				colorAlg = barycentricInterp(p, t0, t1, t2, QColor("yellow"), QColor("purple"), QColor("brown"));
-			setPixel(p.x(), p.y(), colorAlg);
-			xStart++;
+			int xStart = (int) (x1 + 1.0);									// ceil number
+			int xEnd = (int) x2;														// floor number
+			while(xStart <= xEnd)
+			{
+				setPixel(xStart, y, nearestNeighbor(xStart, y, t0, t1, t2));
+				xStart++;
+			}
+			x1 += w1;
+			x2 += w2;
+			y++;
 		}
-
-		x1 += w1;
-		x2 += w2;
-		y++;
+	}
+	else if(interpType == 2)
+	{
+		while(y < ymax)
+		{
+			int xStart = (int) (x1 + 1.0);									// ceil number
+			int xEnd = (int) x2;														// floor number
+			while(xStart <= xEnd)
+			{
+				setPixel(xStart, y, barycentricInterp(xStart, y, t0, t1, t2));
+				xStart++;
+			}
+			x1 += w1;
+			x2 += w2;
+			y++;
+		}
+	}
+	else
+	{
+		while(y < ymax)
+		{
+			int xStart = (int) (x1 + 1.0);									// ceil number
+			int xEnd = (int) x2;														// floor number
+			while(xStart <= xEnd)
+			{
+				setPixel(xStart, y, color);
+				xStart++;
+			}
+			x1 += w1;
+			x2 += w2;
+			y++;
+		}
 	}
 }
+
 void ViewerWidget::fillBottomTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2)						//P/p1 -> p1/P -> p2
-{	
+{
 	double w1 = (p2.x() - p0.x()) / (double) (p2.y() - p0.y());
 	double w2 = (p2.x() - p1.x()) / (double) (p2.y() - p1.y());
 
@@ -512,76 +543,121 @@ void ViewerWidget::fillBottomTriangle(QPoint p0, QPoint p1, QPoint p2, const QCo
 	double x1 = p0.x();
 	double x2 = p1.x();
 
-	while(y < ymax)
-	{
-		int xStart = qCeil(qMin(x1, x2));
-		int xEnd = qFloor(qMax(x1, x2));
-		while(xStart <= xEnd)
-		{
-			QPoint p(xStart, y);
-			QColor colorAlg = color;
-			if(interpType == 1)
-				colorAlg = nearestNeighbor(p, t0, t1, t2, QColor("green"), QColor("red"), QColor("blue"));
-			else if(interpType == 2)
-				colorAlg = barycentricInterp(p, t0, t1, t2, QColor("yellow"), QColor("purple"), QColor("brown"));
-			setPixel(p.x(), p.y(), colorAlg);
-			xStart++;
-		}
+	if(x1 > x2)															//		p0			p1
+		std::swap(x1, x2);										//				p2
 
-		x1 += w1;
-		x2 += w2;
-		y++;
+	if(interpType == 1)
+	{
+		while(y < ymax)
+		{
+			int xStart = (int) (x1 + 1.0);									// ceil number
+			int xEnd = (int) x2;														// floor number
+			while(xStart <= xEnd)
+			{
+				setPixel(xStart, y, nearestNeighbor(xStart, y, t0, t1, t2));
+				xStart++;
+			}
+			x1 += w1;
+			x2 += w2;
+			y++;
+		}
+	}
+	else if(interpType == 2)
+	{
+		while(y < ymax)
+		{
+			int xStart = (int) (x1 + 1.0);									// ceil number
+			int xEnd = (int) x2;														// floor number
+			while(xStart <= xEnd)
+			{
+				setPixel(xStart, y, barycentricInterp(xStart, y, t0, t1, t2));
+				xStart++;
+			}
+			x1 += w1;
+			x2 += w2;
+			y++;
+		}
+	}
+	else
+	{
+		while(y < ymax)
+		{
+			int xStart = (int) (x1 + 1.0);									// ceil number
+			int xEnd = (int) x2;														// floor number
+			while(xStart <= xEnd)
+			{
+				setPixel(xStart, y, color);
+				xStart++;
+			}
+			x1 += w1;
+			x2 += w2;
+			y++;
+		}
 	}
 }
-QColor ViewerWidget::nearestNeighbor(const QPoint& p, const QPoint& t0, const QPoint& t1, const QPoint& t2, QColor c0, QColor c1, QColor c2)
+QColor ViewerWidget::nearestNeighbor(int x, int y, const QPoint& t0, const QPoint& t1, const QPoint& t2)
 {
-    int dx0 = p.x() - t0.x();
-    int dy0 = p.y() - t0.y();
-    int d0 = dx0*dx0 + dy0*dy0;
+	int dx0 = x - t0.x();
+	int dy0 = y - t0.y();
+	int d0 = dx0 * dx0 + dy0 * dy0;
 
-    int dx1 = p.x() - t1.x();
-    int dy1 = p.y() - t1.y();
-    int d1 = dx1*dx1 + dy1*dy1;
+	int dx1 = x - t1.x();
+	int dy1 = y - t1.y();
+	int d1 = dx1 * dx1 + dy1 * dy1;
 
-    int dx2 = p.x() - t2.x();
-    int dy2 = p.y() - t2.y();
-    int d2 = dx2*dx2 + dy2*dy2;
+	int dx2 = x - t2.x();
+	int dy2 = y - t2.y();
+	int d2 = dx2 * dx2 + dy2 * dy2;
 
-    if (d0 <= d1 && d0 <= d2) return c0;
-    if (d1 <= d0 && d1 <= d2) return c1;
-    return c2;
+	int min = d0;
+	int idx = 0;
+
+	if(d1 < min)
+	{
+		min = d1; idx = 1;
+	}
+	if(d2 < min)
+		idx = 2;
+
+	static const QColor c0 = Qt::green;
+	static const QColor c1 = Qt::red;
+	static const QColor c2 = Qt::blue;
+
+	return (idx == 0) ? c0 : (idx == 1) ? c1 : c2;
 }
-QColor ViewerWidget::barycentricInterp(const QPoint& p, const QPoint& t0, const QPoint& t1, const QPoint& t2, QColor c0, QColor c1, QColor c2)
+QColor ViewerWidget::barycentricInterp(int x, int y, const QPoint& t0, const QPoint& t1, const QPoint& t2)
 {
-    // celkova plocha trojuholnika T0,T1,T2
-    double A = abs((t1.x() - t0.x()) * (t2.y() - t0.y()) -
-                   (t1.y() - t0.y()) * (t2.x() - t0.x())) / 2.0;
+	// celkova plocha trojuholnika T0,T1,T2
+	double A = abs((t1.x() - t0.x()) * (t2.y() - t0.y()) - (t1.y() - t0.y()) * (t2.x() - t0.x())) / 2.0;
 
-    // plochy podtrojuholnikov s bodom P(x,y)
-    double A0 = abs((t1.x() - p.x()) * (t2.y() - p.y()) -
-                    (t1.y() - p.y()) * (t2.x() - p.x())) / 2.0;
+	// plochy podtrojuholnikov s bodom P(x,y)
+	double A0 = abs((t1.x() - x) * (t2.y() - y) - (t1.y() - y) * (t2.x() - x)) / 2.0;
+	double A1 = abs((t0.x() - x) * (t2.y() - y) - (t0.y() - y) * (t2.x() - x)) / 2.0;
+	double A2 = A - A0 - A1; // tretia plocha (aby sme nemuseli pocitat znova)
 
-    double A1 = abs((t0.x() - p.x()) * (t2.y() - p.y()) -
-                    (t0.y() - p.y()) * (t2.x() - p.x())) / 2.0;
+	// vahy (barycentricke suradnice)
+	double l0 = A0 / A;
+	double l1 = A1 / A;
+	double l2 = 1.0 - l0 - l1;
 
-    double A2 = A - A0 - A1; // tretia plocha (aby sme nemuseli pocitat znova)
+	static QColor c0{QColor("yellow")};
+	static QColor c1{QColor("purple")};
+	static QColor c2{QColor("brown")};
 
-    // vahy (barycentricke suradnice)
-    double l0 = A0 / A;
-    double l1 = A1 / A;
-    double l2 = A2 / A;
+	// interpolacia farby
+	int r = (l0 * c0.red() + l1 * c1.red() + l2 * c2.red()) + 0.5;
+	int g = (l0 * c0.green() + l1 * c1.green() + l2 * c2.green()) + 0.5;
+	int b = (l0 * c0.blue() + l1 * c1.blue() + l2 * c2.blue() + 0.5);
 
-    // interpolacia farby
-    int r = (int)(l0 * c0.red() + l1 * c1.red() + l2 * c2.red());
-    int g = (int)(l0 * c0.green() + l1 * c1.green() + l2 * c2.green());
-    int b = (int)(l0 * c0.blue() + l1 * c1.blue() + l2 * c2.blue());
+	// orezanie na rozsah 0-255
+	r = (r >= 255) ? 255 : (r < 0 ? 0 : r);
+	g = (g >= 255) ? 255 : (g < 0 ? 0 : g);
+	b = (b >= 255) ? 255 : (b < 0 ? 0 : b);
+	//r = qBound(0, r, 255);
+	//g = qBound(0, g, 255);
+	//b = qBound(0, b, 255);
 
-    // orezanie na rozsah 0255
-    r = qBound(0, r, 255);
-    g = qBound(0, g, 255);
-    b = qBound(0, b, 255);
-
-    return QColor(r, g, b);
+	return QColor(r, g, b);
 }
 /* Algorithms */
 
@@ -715,18 +791,18 @@ void ViewerWidget::drawPolygon(QColor color, int algType, int interpType)
 
 	if(transformedVert.size() > 2)																																	// Polygon
 	{
+		if(areaIsFilled)
+		{
+			if(transformedVert.size() == 3)																																																							// change this maybe because it'll fill clipped polygon(vertices > 3) too
+				scanLineTriangle(transformedVert[0], transformedVert[1], transformedVert[2], color, interpType);																					// fill triangle
+			else
+				scanLine(transformedVert, color);																																																					// fill polygon (n > 3)
+		}
+
 		QVector <QPoint> clippedPoints = clippingPolygon();
 
 		if(clippedPoints.size() > 1)																																	// whole/clipped polygon is inside clipping area
 		{
-			if(areaIsFilled)
-			{
-				if(clippedPoints.size() == 3)																// change this maybe because it'll fill clipped polygon(vertices > 3) too
-					scanLineTriangle(clippedPoints[0], clippedPoints[1], clippedPoints[2], color, interpType);
-				else
-					scanLine(clippedPoints, color);
-			}
-
 			for(qsizetype i = 1; i < clippedPoints.size(); i++)
 				drawLine(clippedPoints[i - 1], clippedPoints[i], color, algType);
 
