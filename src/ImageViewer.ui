@@ -119,6 +119,19 @@
         <string>Draw</string>
        </property>
        <layout class="QGridLayout" name="gridLayout">
+        <item row="7" column="1">
+         <widget class="QPushButton" name="pushButtonClear">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Clear</string>
+          </property>
+          <property name="checkable">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="0" colspan="2">
          <widget class="QComboBox" name="comboBoxFigure">
           <item>
@@ -131,19 +144,11 @@
             <string>Circle</string>
            </property>
           </item>
-         </widget>
-        </item>
-        <item row="6" column="1">
-         <widget class="QPushButton" name="pushButtonClear">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Clear</string>
-          </property>
-          <property name="checkable">
-           <bool>false</bool>
-          </property>
+          <item>
+           <property name="text">
+            <string>Curve</string>
+           </property>
+          </item>
          </widget>
         </item>
         <item row="1" column="0" colspan="2">
@@ -166,7 +171,7 @@
           </item>
          </widget>
         </item>
-        <item row="6" column="0">
+        <item row="7" column="0">
          <widget class="QPushButton" name="pushButtonFill">
           <property name="enabled">
            <bool>false</bool>
@@ -179,7 +184,7 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="0" colspan="2">
+        <item row="3" column="0" colspan="2">
          <widget class="QComboBox" name="comboBoxInterpAlg">
           <property name="editable">
            <bool>false</bool>
@@ -197,6 +202,15 @@
           <item>
            <property name="text">
             <string>Barycentric interpolation</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="2" column="0" colspan="2">
+         <widget class="QComboBox" name="comboBoxCurveAlg">
+          <item>
+           <property name="text">
+            <string>Hermite-Ferguson cubic</string>
            </property>
           </item>
          </widget>

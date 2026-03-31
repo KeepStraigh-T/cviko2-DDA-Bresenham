@@ -82,9 +82,43 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 		if(w->getDrawActivated())																															// start of drawing
 		{
 			uiAccessibility(false);																															// disable interface
-			w->push_backVertex(e->pos());																												// add a vertex of polygon/line or circle
+			if(ui->comboBoxFigure->currentIndex() == 2)
+			{
+				QPoint point(e->pos().x(), e->pos().y());
+				QPoint handle(point + QPoint(50, 0));
+				w->curvePoints.push_back({point, handle});
+			}
+			else
+				w->push_backVertex(e->pos());																												// add a vertex of polygon/line or circle
+
 			w->setPixel(e->pos().x(), e->pos().y(), globalColor);																// set pixel of each vertex
 			w->update();
+		}
+		else if(ui->comboBoxFigure->currentIndex() == 2 && ui->comboBoxCurveAlg->currentIndex() == 0)
+		{
+			QPoint pos = e->pos();
+			const int radius = 50;
+
+			for(int i = 0; i < w->curvePoints.size(); i++)
+			{
+				// check main point
+				if((w->curvePoints[i].point - pos).manhattanLength() < radius)
+				{
+					selectedIndex = i;
+					selectedType = SelectedType::POINT;
+					return;
+				}
+
+				// check handle
+				else if((w->curvePoints[i].handle - pos).manhattanLength() < radius)
+				{
+					selectedIndex = i;
+					selectedType = SelectedType::HANDLE;
+					return;
+				}
+			}
+
+			selectedType = SelectedType::NONE;
 		}
 		else if(!w->getDragging())																														// enable moving
 		{
@@ -95,22 +129,29 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 			w->setDragging(false);
 	}
 
-	else if(e->button() == Qt::RightButton && w->sizeVertex() > 0)
+	else if(e->button() == Qt::RightButton && (w->sizeVertex() > 0 || w->curvePoints.size() > 0))
 	{
 		if(w->getDrawActivated())																															// first right click finishes drawing
 		{
-			if(ui->comboBoxFigure->currentIndex() == 0)
+			if(ui->comboBoxFigure->currentIndex() == 0)																					// draw polygon
 			{
 				vW->initTransfVert();																															// initialize transformed vertices with original
 				vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
+				uiAccessibility(true);																															// unable interface
 			}
 			else if(ui->comboBoxFigure->currentIndex() == 1 && w->sizeVertex() == 2)						// draw circle
+			{
 				w->drawCircle(globalColor);
+				uiAccessibility(true);																															// unable interface
+			}
+			else if(ui->comboBoxFigure->currentIndex() == 2 && w->curvePoints.size() >= 2)						// draw curve
+			{
+				vW->drawCurve(globalColor, ui->comboBoxCurveAlg->currentIndex(), ui->comboBoxLineAlg->currentIndex());
+				uiAccessibility(true);																															// unable interface
 
-			uiAccessibility(true);																															// unable interface
+			}
 			w->setDrawActivated(false);
 		}
-
 		else																																									// second right click clears the canvas
 		{
 			clearCanvas();																																			// clear whole canvas on right button click (after finished drawing)
@@ -121,12 +162,42 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
+	if(ui->comboBoxFigure->currentIndex() == 2)
+	{
+		// TODO: add point or point+handle dragging
+		if(selectedType == SelectedType::NONE || selectedIndex < 0)
+			return;
+
+		QPoint pos = e->pos();
+
+		if(selectedType == SelectedType::POINT)
+		{
+			QPoint delta = pos - w->curvePoints[selectedIndex].point;
+
+			// move point AND handle together
+			w->curvePoints[selectedIndex].point = pos;
+			w->curvePoints[selectedIndex].handle += delta;
+		}
+		else if(selectedType == SelectedType::HANDLE)
+		{
+			// move only handle
+			w->curvePoints[selectedIndex].handle = pos;
+		}
+
+		update(); // redraw
+		vW->drawCurve(globalColor, ui->comboBoxCurveAlg->currentIndex(), ui->comboBoxLineAlg->currentIndex());
+
+		return;
+	}
 
 	if(!w->getDragging())
 		return;
 
 	w->translation(e->pos());
-	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
+	if(ui->comboBoxFigure->currentIndex() == 0)
+		vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
+	else if(ui->comboBoxFigure->currentIndex() == 1 && vW->sizeVertex() == 2)
+		vW->drawCircle(globalColor);
 
 }
 void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event)
@@ -146,6 +217,9 @@ void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event)
 void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event)
 {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
+
+	selectedType = SelectedType::NONE;
+	selectedIndex = -1;
 }
 void ImageViewer::ViewerWidgetLeave(ViewerWidget* w, QEvent* event)
 {

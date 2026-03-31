@@ -628,7 +628,7 @@ QColor ViewerWidget::nearestNeighbor(int x, int y, const QPoint& t0, const QPoin
 QColor ViewerWidget::barycentricInterp(int x, int y, const QPoint& t0, const QPoint& t1, const QPoint& t2)
 {
 	// celkova plocha trojuholnika T0,T1,T2
-	double A = abs((t1.x() - t0.x()) * (t2.y() - t0.y()) - (t1.y() - t0.y()) * (t2.x() - t0.x())) / 2.0;
+	double A = abs((t1.x() - t0.x()) * (t2.y() - t0.y()) - (t1.y() - t0.y()) * (t2.x() - t0.x())) / 2.0; // half magnitude of normal
 
 	// plochy podtrojuholnikov s bodom P(x,y)
 	double A0 = abs((t1.x() - x) * (t2.y() - y) - (t1.y() - y) * (t2.x() - x)) / 2.0;
@@ -816,6 +816,49 @@ void ViewerWidget::drawPolygon(QColor color, int algType, int interpType)
 			drawLine(clippedPoints[0], clippedPoints[1], color, algType);
 	}
 }
+void ViewerWidget::drawCurve(QColor color, int curveType, int algType)
+{
+		if(isEmpty())
+		return;
+
+	img->fill(Qt::white);
+
+	if(curveType == 0)																	// Hermite-Ferguson cubic
+	{
+		double dt = 1.0 / (double)(curvePoints.size() - 1);
+		QPoint Q0 {};
+		QPoint Q1 {};
+		double t{};
+		
+		for(qsizetype i = 1; i < curvePoints.size(); i++)
+		{
+			Q0 = curvePoints[i - 1].point;
+			t = dt;
+			while(t < 1)
+			{
+				double F0 = 2*t*t*t - 3*t*t + 1;
+				double F1 = -2*t*t*t + 3*t*t;
+				double F2 = t*t*t - 2*t*t + t;
+				double F3 = t*t*t -t*t;
+
+				double x = curvePoints[i - 1].point.x() *F0 + curvePoints[i].point.x()*F1 + (curvePoints[i - 1].handle.x() - curvePoints[i - 1].point.x()) * F2 + (curvePoints[i].handle.x() - curvePoints[i].point.x()) * F3;
+				double y = curvePoints[i - 1].point.y()*F0 + curvePoints[i].point.y()*F1 + (curvePoints[i - 1].handle.y() - curvePoints[i - 1].point.y()) * F2 + (curvePoints[i].handle.y() - curvePoints[i].point.y()) * F3;
+				Q1.setX(x + 0.5);
+				Q1.setY(y + 0.5);
+				drawLine(Q0, QPoint(x + 0.5, y + 0.5), color, algType);
+			 Q0 = Q1;
+			 t += dt;
+			}
+			drawLine(Q0, curvePoints[i].point, color, algType);
+		}
+
+		for(qsizetype i = 0; i < curvePoints.size(); i++)
+		{
+			drawLine(curvePoints[i].point, curvePoints[i].handle, color, algType);
+		}
+	}
+}
+
 
 bool ViewerWidget::setImage(const QImage& inputImg)
 {
@@ -927,6 +970,9 @@ void ViewerWidget::clear()
 
 	if(!vertices.isEmpty())
 		vertices.clear();
+
+	if(!curvePoints.isEmpty())
+		curvePoints.clear();
 
 	if(!transformedVert.isEmpty())
 		transformedVert.clear();

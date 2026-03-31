@@ -5,13 +5,22 @@
 #include "ui_ImageViewer.h"
 #include "ViewerWidget.h"
 
-class ImageViewer : public QMainWindow
+enum class SelectedType
+{
+	NONE,
+	POINT,
+	HANDLE
+};
+
+class ImageViewer: public QMainWindow
 {
 	Q_OBJECT
 
 public:
 	ImageViewer(QWidget* parent = Q_NULLPTR);
-	~ImageViewer() { delete ui; }
+	~ImageViewer() {
+		delete ui;
+	}
 private:
 	Ui::ImageViewerClass* ui;
 	ViewerWidget* vW;
@@ -21,6 +30,10 @@ private:
 	QMessageBox msgBox;
 
 	QButtonGroup* drawGroup;
+
+	int selectedIndex = -1;
+	SelectedType selectedType = SelectedType::NONE;
+
 	//Event filters
 	bool eventFilter(QObject* obj, QEvent* event);
 

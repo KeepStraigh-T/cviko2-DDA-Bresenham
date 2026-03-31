@@ -5,7 +5,17 @@
 
 #define DEBUG
 
-class ViewerWidget :public QWidget {
+struct ControlPoint
+{
+	QPoint point;																							// main point
+	QPoint handle;															// tangent point
+
+	ControlPoint(QPoint p, QPoint h): point(p), handle(h) {
+	};
+};
+
+class ViewerWidget:public QWidget
+{
 	Q_OBJECT
 private:
 	QSize areaSize = QSize(0, 0);
@@ -29,9 +39,15 @@ public:
 	~ViewerWidget();
 	void resizeWidget(QSize size);
 
+public:
+	QVector <ControlPoint> curvePoints;
+
+
 	//Image functions
 	bool setImage(const QImage& inputImg);
-	QImage* getImage() { return img; };
+	QImage* getImage() {
+		return img;
+	};
 	bool isEmpty();
 	bool changeSize(int width, int height);
 
@@ -40,43 +56,66 @@ public:
 	void setPixel(int x, int y, const QColor& color);
 	bool isInside(int x, int y);
 
-//Draw functions
+	//Draw functions
 	void drawLine(QPoint start, QPoint end, QColor color, int algType = 0);
 	void drawPolygon(QColor color, int algType, int interpType);
 	void drawCircle(QColor color);
 	void drawCirclePoints(int xc, int yc, int x, int y, QColor color);
+
+	void drawCurve(QColor color, int curveType, int algType);
+
 
 	//Clipping functions
 	QVector<QPoint> clippingLine();
 	QVector<QPoint> clippingPolygon();
 
 	// Additional functions for drawing
-	void setDrawLineBegin(QPoint begin) { drawLineBegin = begin; }
-	QPoint getDrawLineBegin() { return drawLineBegin; }
-	void setDrawActivated(bool state) { drawActivated = state; }
-	bool getDrawActivated() { return drawActivated; }
-	void setDragging(bool state) { dragging = state; }
-	bool getDragging() { return dragging; }
-	void setLastMousePos(QPoint pos) { lastMousePos = pos; }
-	QPoint getLastMousePos() { return lastMousePos; }
+	void setDrawLineBegin(QPoint begin) {
+		drawLineBegin = begin;
+	}
+	QPoint getDrawLineBegin() {
+		return drawLineBegin;
+	}
+	void setDrawActivated(bool state) {
+		drawActivated = state;
+	}
+	bool getDrawActivated() {
+		return drawActivated;
+	}
+	void setDragging(bool state) {
+		dragging = state;
+	}
+	bool getDragging() {
+		return dragging;
+	}
+	void setLastMousePos(QPoint pos) {
+		lastMousePos = pos;
+	}
+	QPoint getLastMousePos() {
+		return lastMousePos;
+	}
 	void swapPoints(QPoint& start, QPoint& end);
 
-// Transformations
+	// Transformations
 	void rotate(double angle);
 	void scale(double factorX, double factorY);
 	void shear(double factorX);
 	void symmetry();
 	void translation(QPoint currentPos);
 
-// Filling functions
-	void setFilled(bool state) { areaIsFilled = state; };
-	bool getFilled() { return areaIsFilled; };
+	// Filling functions
+	void setFilled(bool state) {
+		areaIsFilled = state;
+	};
+	bool getFilled() {
+		return areaIsFilled;
+	};
 	void scanLine(const QVector <QPoint>& nodes, const QColor& color);
 	QColor nearestNeighbor(int x, int y, const QPoint& t0, const QPoint& t1, const QPoint& t2);
 	QColor barycentricInterp(int x, int y, const QPoint& t0, const QPoint& t1, const QPoint& t2);
 	void scanLineTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType);
-	private: void fillBottomTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2);
-	private: void fillTopTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2);
+private: void fillBottomTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2);
+private: void fillTopTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2);
 
 public:
 	// Vertices access functions
@@ -84,15 +123,27 @@ public:
 	void push_backVertex(QPoint point);
 	QPoint backVertex();
 	QPoint firstVertex();
-	qsizetype sizeVertex() { return vertices.size(); };
-	void initTransfVert() { transformedVert = vertices; transformedVert.detach(); };
+	qsizetype sizeVertex() {
+		return vertices.size();
+	};
+	void initTransfVert() {
+		transformedVert = vertices; transformedVert.detach();
+	};
 
 	// Get/Set functions
-	uchar* getData() { return data; }
-	void setDataPtr() { data = img ? img->bits() : nullptr; }
+	uchar* getData() {
+		return data;
+	}
+	void setDataPtr() {
+		data = img ? img->bits() : nullptr;
+	}
 
-	int getImgWidth() { return img ? img->width() : 0; };
-	int getImgHeight() { return img ? img->height() : 0; };
+	int getImgWidth() {
+		return img ? img->width() : 0;
+	};
+	int getImgHeight() {
+		return img ? img->height() : 0;
+	};
 
 	void clear();
 
