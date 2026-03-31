@@ -319,7 +319,7 @@ void ViewerWidget::scanLine(const QVector <QPoint>& nodes, const QColor& color)
 			e.yz = nodes[next].y();
 			e.xz = nodes[next].x();
 			int xk = nodes[current].x();
-			e.w = (e.xz - xk) / (double) (nodes[current].y() - nodes[next].y());												// 1 / m (m is slopep)
+			e.w = (e.xz - xk) / (double) (nodes[current].y() - nodes[next].y());												// 1 / m (m is slope)
 			e.yk = nodes[current].y();
 		}
 		else
@@ -818,10 +818,12 @@ void ViewerWidget::drawPolygon(QColor color, int algType, int interpType)
 }
 void ViewerWidget::drawCurve(QColor color, int curveType, int algType)
 {
-		if(isEmpty())
-		return;
+	if(isEmpty())
+	return;
 
 	img->fill(Qt::white);
+
+	qsizetype pointsNumber = curvePoints.size();
 
 	if(curveType == 0)																	// Hermite-Ferguson cubic
 	{
@@ -856,6 +858,42 @@ void ViewerWidget::drawCurve(QColor color, int curveType, int algType)
 		{
 			drawLine(curvePoints[i].point, curvePoints[i].handle, color, algType);
 		}
+	}
+	else if (curveType == 1)
+	{
+		QVector <QVector <QPointF>> points;
+		points.resize(curvePoints.size());
+		for (qsizetype i = 0; i < pointsNumber; i++)
+		{
+			points[i].resize(pointsNumber - i);
+		}
+
+		double dt = 1.0 / (double)(pointsNumber - 1);
+
+		double t = dt;
+
+		QPointF Q0 {};
+		QPointF Q1 {};
+		Q0 = curvePoints[0].point;
+
+		while (t < 1.0)
+		{
+			for (qsizetype i = 0; i < pointsNumber; i++)
+			{
+				for (qsizetype j = 0; j < pointsNumber - i; j++)
+				{
+					points[i][j] = (1.0 - t) * points[i - 1][j] + t * points[i - 1][j + 1];
+				}
+			}
+
+			Q1 = points[pointsNumber - 1][0];
+			drawLine(Q0.toPoint(), Q1.toPoint(), color, algType);
+			Q0 = Q1;
+			t += dt;
+
+		}
+
+		drawLine(Q0.toPoint(), points[pointsNumber - 1][0].toPoint(), color, algType);
 	}
 }
 

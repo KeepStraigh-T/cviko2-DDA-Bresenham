@@ -37,8 +37,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>651</width>
-         <height>742</height>
+         <width>627</width>
+         <height>737</height>
         </rect>
        </property>
       </widget>
@@ -52,7 +52,7 @@
      <x>0</x>
      <y>0</y>
      <width>979</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -211,6 +211,11 @@
           <item>
            <property name="text">
             <string>Hermite-Ferguson cubic</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Bezier (Casteljauov)</string>
            </property>
           </item>
          </widget>
