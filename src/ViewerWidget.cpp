@@ -653,11 +653,116 @@ QColor ViewerWidget::barycentricInterp(int x, int y, const QPoint& t0, const QPo
 	r = (r >= 255) ? 255 : (r < 0 ? 0 : r);
 	g = (g >= 255) ? 255 : (g < 0 ? 0 : g);
 	b = (b >= 255) ? 255 : (b < 0 ? 0 : b);
-	//r = qBound(0, r, 255);
-	//g = qBound(0, g, 255);
-	//b = qBound(0, b, 255);
 
 	return QColor(r, g, b);
+}
+
+void ViewerWidget::fergusovCubicCurve(QColor color, int algType)
+{
+	qsizetype pointAmount = curvePoints.size() - 1;
+	double dt = 1.0 / (double)(pointAmount - 1);
+	QPoint Q0{};
+	QPoint Q1{};
+	double t{};
+
+	for (qsizetype i = 1; i < pointAmount; i++)
+	{
+		Q0 = curvePoints[i - 1].point;
+		t = dt;
+		while (t < 1)
+		{
+			double F0 = 2 * t * t * t - 3 * t * t + 1;
+			double F1 = -2 * t * t * t + 3 * t * t;
+			double F2 = t * t * t - 2 * t * t + t;
+			double F3 = t * t * t - t * t;
+
+			double x = curvePoints[i - 1].point.x() * F0 + curvePoints[i].point.x() * F1 + (curvePoints[i - 1].handle.x() - curvePoints[i - 1].point.x()) * F2 + (curvePoints[i].handle.x() - curvePoints[i].point.x()) * F3;
+			double y = curvePoints[i - 1].point.y() * F0 + curvePoints[i].point.y() * F1 + (curvePoints[i - 1].handle.y() - curvePoints[i - 1].point.y()) * F2 + (curvePoints[i].handle.y() - curvePoints[i].point.y()) * F3;
+			Q1.setX(x + 0.5);
+			Q1.setY(y + 0.5);
+			drawLine(Q0, QPoint(x + 0.5, y + 0.5), color, algType);
+			Q0 = Q1;
+			t += dt;
+		}
+		drawLine(Q0, curvePoints[i].point, color, algType);
+	}
+
+	for (qsizetype i = 0; i < pointAmount; i++)
+	{
+		drawLine(curvePoints[i].point, curvePoints[i].handle, color, algType);
+	}
+}
+
+void ViewerWidget::bezierCurve(QColor color, int algType)
+{
+	QVector <QVector <QPointF>> points;
+	points.resize(curvePoints.size());
+
+	qsizetype pointAmount = curvePoints.size();
+
+	for (qsizetype i = 0; i < pointAmount; i++)
+		points[i].resize(pointAmount - i);
+
+	for (qsizetype i = 0; i < pointAmount; i++)					// init first row with user entered points
+	{
+		points[0][i] = curvePoints[i].point;
+	}
+
+	double dt = 1.0 / (double)(pointAmount - 1);
+
+	double t = dt;
+
+	QPointF Q0{};
+	QPointF Q1{};
+	Q0 = points[0][0];
+
+	while (t < 1.0)
+	{
+		for (qsizetype i = 1; i < pointAmount; i++)
+		{
+			for (qsizetype j = 0; j < pointAmount - i; j++)
+			{
+				points[i][j] = (1.0 - t) * points[i - 1][j] + t * points[i - 1][j + 1];
+			}
+		}
+
+		Q1 = points[pointAmount - 1][0];
+		drawLine(Q0.toPoint(), Q1.toPoint(), color, algType);
+		Q0 = Q1;
+		t += dt;
+
+	}
+
+	drawLine(Q0.toPoint(), curvePoints[pointAmount - 1].point, color, algType);
+
+}
+
+void ViewerWidget::coonsoveCubicBSpline(QColor color, int algType)
+{
+	if (curvePoints.size() < 4)												// algorithm work with n > 4 points
+		return;
+
+	double dt = 1.0 / (double)(pointAmount - 1);
+
+	double B0 = [](double t) { return  (-1 / 6.0) * t * t * t + (1 / 2.0) * t * t - (1 / 2.0) * t + (1 / 6.0); };
+	double B1 = [](double t) { return  (1 / 2.0) * t * t * t - t * t + (2 / 3.0); };
+	double B2 = [](double t) { return  (-1 / 2.0) * t * t * t + (1 / 2.0) * t * t + (1 / 2.0) * t + 1 / 6.0; };
+	double B3 = [](double t) { return  (1 / 6.0) * t * t * t; };
+
+	QPointF Q0{};
+	QPointF Q1{};
+	for (qsizetype i = 3; i < curvePoints.size(); i++)
+	{
+		double t = 0.0;
+		QPointF Q0 = curvePoints[i - 3].point * B0(0.0) + curvePoints[i - 2].point * B1(0.0) + curvePoints[i - 1].point * B2(0.0) + curvePoints[i].point * B3(0.0);
+		while (t < 1.0)
+		{
+			t += dt;
+			Q1 = curvePoints[i - 3].point * B0(t) + curvePoints[i - 2].point * B1(t) + curvePoints[i - 1].point * B2(t) + curvePoints[i].point * B3(t);
+
+		}
+	}
+
 }
 /* Algorithms */
 
@@ -823,80 +928,23 @@ void ViewerWidget::drawCurve(QColor color, int curveType, int algType)
 
 	img->fill(Qt::white);
 
-	qsizetype pointsNumber = curvePoints.size();
+	// leave approximated points on canvas
+	for (qsizetype i = 1; i < curvePoints.size(); i++)
+		setPixel(curvePoints[i].point.x(), curvePoints[i].point.y(), color);
 
 	if(curveType == 0)																	// Hermite-Ferguson cubic
 	{
-		double dt = 1.0 / (double)(curvePoints.size() - 1);
-		QPoint Q0 {};
-		QPoint Q1 {};
-		double t{};
-		
-		for(qsizetype i = 1; i < curvePoints.size(); i++)
-		{
-			Q0 = curvePoints[i - 1].point;
-			t = dt;
-			while(t < 1)
-			{
-				double F0 = 2*t*t*t - 3*t*t + 1;
-				double F1 = -2*t*t*t + 3*t*t;
-				double F2 = t*t*t - 2*t*t + t;
-				double F3 = t*t*t -t*t;
-
-				double x = curvePoints[i - 1].point.x() *F0 + curvePoints[i].point.x()*F1 + (curvePoints[i - 1].handle.x() - curvePoints[i - 1].point.x()) * F2 + (curvePoints[i].handle.x() - curvePoints[i].point.x()) * F3;
-				double y = curvePoints[i - 1].point.y()*F0 + curvePoints[i].point.y()*F1 + (curvePoints[i - 1].handle.y() - curvePoints[i - 1].point.y()) * F2 + (curvePoints[i].handle.y() - curvePoints[i].point.y()) * F3;
-				Q1.setX(x + 0.5);
-				Q1.setY(y + 0.5);
-				drawLine(Q0, QPoint(x + 0.5, y + 0.5), color, algType);
-			 Q0 = Q1;
-			 t += dt;
-			}
-			drawLine(Q0, curvePoints[i].point, color, algType);
-		}
-
-		for(qsizetype i = 0; i < curvePoints.size(); i++)
-		{
-			drawLine(curvePoints[i].point, curvePoints[i].handle, color, algType);
-		}
+		fergusovCubicCurve(color, algType);
 	}
 	else if (curveType == 1)
 	{
-		QVector <QVector <QPointF>> points;
-		points.resize(curvePoints.size());
-		for (qsizetype i = 0; i < pointsNumber; i++)
-		{
-			points[i].resize(pointsNumber - i);
-		}
-
-		double dt = 1.0 / (double)(pointsNumber - 1);
-
-		double t = dt;
-
-		QPointF Q0 {};
-		QPointF Q1 {};
-		Q0 = curvePoints[0].point;
-
-		while (t < 1.0)
-		{
-			for (qsizetype i = 0; i < pointsNumber; i++)
-			{
-				for (qsizetype j = 0; j < pointsNumber - i; j++)
-				{
-					points[i][j] = (1.0 - t) * points[i - 1][j] + t * points[i - 1][j + 1];
-				}
-			}
-
-			Q1 = points[pointsNumber - 1][0];
-			drawLine(Q0.toPoint(), Q1.toPoint(), color, algType);
-			Q0 = Q1;
-			t += dt;
-
-		}
-
-		drawLine(Q0.toPoint(), points[pointsNumber - 1][0].toPoint(), color, algType);
+		bezierCurve(color, algType);
+	}
+	else if (curveType == 2)
+	{
+		coonsoveCubicBSpline(color, algType);
 	}
 }
-
 
 bool ViewerWidget::setImage(const QImage& inputImg)
 {

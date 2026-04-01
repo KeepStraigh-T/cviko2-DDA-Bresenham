@@ -10,11 +10,11 @@ struct ControlPoint
 	QPoint point;																							// main point
 	QPoint handle;															// tangent point
 
-	ControlPoint(QPoint p, QPoint h): point(p), handle(h) {
+	ControlPoint(QPoint p, QPoint h) : point(p), handle(h) {
 	};
 };
 
-class ViewerWidget:public QWidget
+class ViewerWidget :public QWidget
 {
 	Q_OBJECT
 private:
@@ -151,6 +151,12 @@ public:
 	void drawLineDDA(QPoint start, QPoint end, QColor color);
 	void drawLineBresenham(QPoint start, QPoint end, QColor color);
 	void drawCircleBresenham(QPoint center, QPoint end, QColor color);
+
+	void fergusovCubicCurve(QColor color, int algType);
+	void bezierCurve(QColor color, int algType);
+	void coonsoveCubicBSpline(QColor color, int algType);
+
+
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;

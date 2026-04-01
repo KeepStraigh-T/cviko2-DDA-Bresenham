@@ -148,7 +148,6 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 			{
 				vW->drawCurve(globalColor, ui->comboBoxCurveAlg->currentIndex(), ui->comboBoxLineAlg->currentIndex());
 				uiAccessibility(true);																															// unable interface
-
 			}
 			w->setDrawActivated(false);
 		}
