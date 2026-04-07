@@ -284,6 +284,7 @@ QVector<QPoint> ViewerWidget::clippingLine()
 
 	return transformedVert;
 }
+
 // Filling
 void ViewerWidget::scanLine(const QVector <QPoint>& nodes, const QColor& color)
 {
@@ -302,72 +303,52 @@ void ViewerWidget::scanLine(const QVector <QPoint>& nodes, const QColor& color)
 
 	int ymin, ymax{};
 
-	// create list of edges based on polygon vertices (orient the edge from top to down (swap edge's vertices))
-	QList <Edge> edges;																																						// polygon's edges
+	// create list of edges based on polygon vertices (orient the edge from top to down (swap edge's vertices if needed))
+	QVector <Edge> edges;																																												// polygon's edges
+	edges.resize(nodes.size());																				// reduce/remove reallcoations						// vertives number == edges number 
+
 	Edge e{};
-	for(qsizetype current = 0; current < nodes.size(); current++)																	// fill up list of edges of the polygon
+	QPoint p1, p2{};
+	for(qsizetype current = 0; current < nodes.size(); current++)																							// fill up list of edges of the polygon
 	{
 		qsizetype next = (current + 1) % nodes.size();
+		p1 = nodes[current];
+		p2 = nodes[next];
 
-		if(nodes[current].y() == nodes[next].y())																										// skip horizontal edge
-		{
-			ymax = nodes[current].y() > ymax ? nodes[current].y() : ymax;
+		ymax = p1.y() > ymax ? p1.y() : ymax;
+
+		if(p1.y() == p2.y())																																										// skip horizontal edge
 			continue;
-		}
-		else if(nodes[current].y() > nodes[next].y())																								// orient the edge from top to down (swap edge's vertices)
-		{
-			e.yz = nodes[next].y();
-			e.xz = nodes[next].x();
-			int xk = nodes[current].x();
-			e.w = (e.xz - xk) / (double) (nodes[current].y() - nodes[next].y());												// 1 / m (m is slope)
-			e.yk = nodes[current].y();
-		}
-		else
-		{
-			e.yz = nodes[current].y();
-			e.xz = nodes[current].x();
-			int xk = nodes[next].x();
-			e.w = (xk - e.xz) / (double) (nodes[next].y() - nodes[current].y());												// 1 / m (m is slope)
-			e.yk = nodes[next].y();
-		}
-		ymax = e.yk > ymax ? e.yk : ymax;
-		e.w = (nodes[next].x() - nodes[current].x()) / (double) (nodes[next].y() - nodes[current].y());												// 1 / m (m is slope)
-		e.yk -= 1;
+		else if(p1.y() > p2.y())
+			swapPoints(p1, p2);
+
+		e.yz = p1.y();
+		e.xz = p1.x();
+		int xk = p2.x();
+		e.w = (xk - e.xz) / (double) (p2.y() - p1.y());																													// 1 / m (m is slope)
+		e.yk = p2.y() - 1;																																											// dont know why -1 though
 
 		edges.append(e);
 	}
-#ifdef DEBUUG
-	for(const Edge& edge : edges)
-	{
-		qDebug() << QString("(xz: %1, yz: %2, yk: %3)").arg(edge.xz).arg(edge.yz).arg(edge.yk);
-	}
-	qDebug() << "\n";
-#endif
 
 	if(edges.isEmpty())
 		return;
 
-	std::sort(edges.begin(), edges.end());																													// sort list so e[i].yz <= e[i+1].yz
-#ifdef DEBUUG
-	for(const Edge& edge : edges)
-	{
-		qDebug() << QString("(xz: %1, yz: %2, yk: %3)").arg(edge.xz).arg(edge.yz).arg(edge.yk);
-	}
-	qDebug() << "\n";
-#endif
+	std::sort(edges.begin(), edges.end());																																		// sort list so e[i].yz <= e[i+1].yz
+
 	ymin = edges[0].yz;
 
 	struct scanLineEdge
 	{
-		int dy;																																												// number of rows which contain an edge
-		double x;																																											// x coordinate of current intercept with current row
-		double w;																																											// increment of x for each row
+		int dy;																																																	// number of rows which contain an edge
+		double x;																																																// x coordinate of current intercept with current row
+		double w;																																																// increment of x for each row
 	};
 
-	QVector <QList <scanLineEdge>> edgesTable{};
+	QVector <QVector <scanLineEdge>> edgesTable{};
 	edgesTable.resize(ymax - ymin + 1);
 
-	// fill every row (QList) in table(QVector) with edges that have yz in this row
+	// fill every row (QList) in table (QVector) with edges that have startpoint in this row
 	for(qsizetype j = 0; j < edges.size(); j++)
 	{
 		scanLineEdge se;
@@ -378,56 +359,47 @@ void ViewerWidget::scanLine(const QVector <QPoint>& nodes, const QColor& color)
 		edgesTable[edges[j].yz - ymin].append(se);
 	}
 
-	QList <scanLineEdge> activeEdges{};
-
-	int y{ymin};
+	int y{ymin};																																																// active row (starts from min row)
+	QVector <scanLineEdge> activeEdges{};
+	activeEdges.resize(edges.size());																																						// reduce/remove reallcoations
 
 	for(qsizetype i = 0; i < edgesTable.size(); i++)
 	{
 		activeEdges.append(edgesTable[i]);																																				// add new edges from row to activeEdges to if they start in this row
-#ifdef DEBUUG
-		for(const scanLineEdge& edge : activeEdges)
-		{
-			qDebug() << QString("x: %1, dy : %2, w : %3").arg(edge.x).arg(edge.dy).arg(edge.w);
-		}
-		qDebug() << "\n";
-#endif
-		std::sort(activeEdges.begin(), activeEdges.end(), [](const scanLineEdge& e1, const scanLineEdge& e2)			// sort edges in activeEdges 
- {
-	 return e1.x < e2.x;
- });
 
-#ifdef DEBUUG
-		for(const scanLineEdge& edge : activeEdges)
+		for(qsizetype k = 1; k < activeEdges.size(); k++)																													// sort if needed
 		{
-			qDebug() << QString("x: %1, dy : %2, w : %3").arg(edge.x).arg(edge.dy).arg(edge.w);
+			qsizetype j = k;
+			while(j > 0 && activeEdges[j].x < activeEdges[j - 1].x)
+			{
+				std::swap(activeEdges[j], activeEdges[j - 1]);
+				j--;
+			}
 		}
-		qDebug() << "\n";
-#endif
-		for(qsizetype j = 0; j + 1 < activeEdges.size(); j += 2)
+	//	std::sort(activeEdges.begin(), activeEdges.end(), [](const scanLineEdge& e1, const scanLineEdge& e2)			// sort edges in activeEdges 
+ //{
+	// return e1.x < e2.x;
+ //});
+
+		for(qsizetype j = 0; j + 1 < activeEdges.size(); j += 2)																									// j + 1 to check if next is last 
 		{
 			int xCeil{qCeil(activeEdges[j].x)};
 			int xFloor{qFloor(activeEdges[j + 1].x)};
 			if(xCeil <= xFloor)
 			{
 				int x{xCeil};
-				while(x <= xFloor)
+				while(x <= xFloor)																																										// here actual filling is being done
 					setPixel(x++, y, color);
 			}
 		}
 
-		for(qsizetype i = 0; i < activeEdges.size(); i++)
-		{
-			activeEdges[i].dy -= 1;
-			activeEdges[i].x += activeEdges[i].w;
-		}
-
 		for(qsizetype i = activeEdges.size() - 1; i >= 0; i--)
 		{
+			activeEdges[i].x += activeEdges[i].w;
+			activeEdges[i].dy--;
 			if(activeEdges[i].dy < 0)
 				activeEdges.remove(i);
 		}
-
 		y++;
 	}
 }
@@ -480,7 +452,7 @@ void ViewerWidget::fillTopTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor
 	int ymax = p2.y();								// same as p1.y()
 	double x1 = p0.x();
 	double x2 = p0.x();
-	
+
 	// do not need to compare x1 and x2 for minority (as in second function for bottom triangle) beacause x1 and x2 start in one point (vertex p0)
 
 	if(interpType == 1)
@@ -660,16 +632,16 @@ QColor ViewerWidget::barycentricInterp(int x, int y, const QPoint& t0, const QPo
 void ViewerWidget::fergusovCubicCurve(QColor color, int algType)
 {
 	qsizetype pointAmount = curvePoints.size() - 1;
-	double dt = 1.0 / (double)(pointAmount - 1);
+	double dt = 1.0 / (double) (pointAmount - 1);
 	QPoint Q0{};
 	QPoint Q1{};
 	double t{};
 
-	for (qsizetype i = 1; i < pointAmount; i++)
+	for(qsizetype i = 1; i < pointAmount; i++)
 	{
 		Q0 = curvePoints[i - 1].point;
 		t = dt;
-		while (t < 1)
+		while(t < 1)
 		{
 			double F0 = 2 * t * t * t - 3 * t * t + 1;
 			double F1 = -2 * t * t * t + 3 * t * t;
@@ -687,7 +659,7 @@ void ViewerWidget::fergusovCubicCurve(QColor color, int algType)
 		drawLine(Q0, curvePoints[i].point, color, algType);
 	}
 
-	for (qsizetype i = 0; i < pointAmount; i++)
+	for(qsizetype i = 0; i < pointAmount; i++)
 	{
 		drawLine(curvePoints[i].point, curvePoints[i].handle, color, algType);
 	}
@@ -700,15 +672,15 @@ void ViewerWidget::bezierCurve(QColor color, int algType)
 
 	qsizetype pointAmount = curvePoints.size();
 
-	for (qsizetype i = 0; i < pointAmount; i++)
+	for(qsizetype i = 0; i < pointAmount; i++)
 		points[i].resize(pointAmount - i);
 
-	for (qsizetype i = 0; i < pointAmount; i++)					// init first row with user entered points
+	for(qsizetype i = 0; i < pointAmount; i++)					// init first row with user entered points
 	{
 		points[0][i] = curvePoints[i].point;
 	}
 
-	double dt = 1.0 / (double)(pointAmount - 1);
+	double dt = 1.0 / (double) (pointAmount - 1);
 
 	double t = dt;
 
@@ -716,11 +688,11 @@ void ViewerWidget::bezierCurve(QColor color, int algType)
 	QPointF Q1{};
 	Q0 = points[0][0];
 
-	while (t < 1.0)
+	while(t < 1.0)
 	{
-		for (qsizetype i = 1; i < pointAmount; i++)
+		for(qsizetype i = 1; i < pointAmount; i++)
 		{
-			for (qsizetype j = 0; j < pointAmount - i; j++)
+			for(qsizetype j = 0; j < pointAmount - i; j++)
 			{
 				points[i][j] = (1.0 - t) * points[i - 1][j] + t * points[i - 1][j + 1];
 			}
@@ -739,27 +711,42 @@ void ViewerWidget::bezierCurve(QColor color, int algType)
 
 void ViewerWidget::coonsoveCubicBSpline(QColor color, int algType)
 {
-	if (curvePoints.size() < 4)												// algorithm work with n > 4 points
+	if(curvePoints.size() < 4)												// algorithm work with n >= 4 points
 		return;
 
-	double dt = 1.0 / (double)(pointAmount - 1);
+	qsizetype pointAmount = curvePoints.size();
 
-	double B0 = [](double t) { return  (-1 / 6.0) * t * t * t + (1 / 2.0) * t * t - (1 / 2.0) * t + (1 / 6.0); };
-	double B1 = [](double t) { return  (1 / 2.0) * t * t * t - t * t + (2 / 3.0); };
-	double B2 = [](double t) { return  (-1 / 2.0) * t * t * t + (1 / 2.0) * t * t + (1 / 2.0) * t + 1 / 6.0; };
-	double B3 = [](double t) { return  (1 / 6.0) * t * t * t; };
+	double dt = 1.0 / (double) (pointAmount - 1);
+
+	auto B0 = [](double t)
+		{
+			return  (-1 / 6.0) * t * t * t + (1 / 2.0) * t * t - (1 / 2.0) * t + (1 / 6.0);
+		};
+	auto B1 = [](double t)
+		{
+			return  (1 / 2.0) * t * t * t - t * t + (2 / 3.0);
+		};
+	auto B2 = [](double t)
+		{
+			return  (-1 / 2.0) * t * t * t + (1 / 2.0) * t * t + (1 / 2.0) * t + 1 / 6.0;
+		};
+	auto B3 = [](double t)
+		{
+			return  (1 / 6.0) * t * t * t;
+		};
 
 	QPointF Q0{};
 	QPointF Q1{};
-	for (qsizetype i = 3; i < curvePoints.size(); i++)
+	for(qsizetype i = 3; i < pointAmount; i++)
 	{
 		double t = 0.0;
 		QPointF Q0 = curvePoints[i - 3].point * B0(0.0) + curvePoints[i - 2].point * B1(0.0) + curvePoints[i - 1].point * B2(0.0) + curvePoints[i].point * B3(0.0);
-		while (t < 1.0)
+		while(t < 1.0)
 		{
 			t += dt;
 			Q1 = curvePoints[i - 3].point * B0(t) + curvePoints[i - 2].point * B1(t) + curvePoints[i - 1].point * B2(t) + curvePoints[i].point * B3(t);
-
+			drawLine(Q0.toPoint(), Q1.toPoint(), color, algType);
+			Q0 = Q1;
 		}
 	}
 
@@ -896,15 +883,25 @@ void ViewerWidget::drawPolygon(QColor color, int algType, int interpType)
 
 	if(transformedVert.size() > 2)																																	// Polygon
 	{
-		if(areaIsFilled)
-		{
-			if(transformedVert.size() == 3)																																																							// change this maybe because it'll fill clipped polygon(vertices > 3) too
-				scanLineTriangle(transformedVert[0], transformedVert[1], transformedVert[2], color, interpType);																					// fill triangle
-			else
-				scanLine(transformedVert, color);																																																					// fill polygon (n > 3)
-		}
+		//if(areaIsFilled)
+		//{
+		//	if(transformedVert.size() == 3)																																																							// change this maybe because it'll fill clipped polygon(vertices > 3) too
+		//		scanLineTriangle(transformedVert[0], transformedVert[1], transformedVert[2], color, interpType);																					// fill triangle
+		//	else
+		//		scanLine(transformedVert, color);																																																					// fill polygon (n > 3)
+		//}
+
+		//QVector <QPoint> clippedPoints = clippingPolygon();
+
 
 		QVector <QPoint> clippedPoints = clippingPolygon();
+		if(areaIsFilled)
+		{
+			if(clippedPoints.size() == 3)																																																							// change this maybe because it'll fill clipped polygon(vertices > 3) too
+				scanLineTriangle(clippedPoints[0], clippedPoints[1], clippedPoints[2], color, interpType);																					// fill triangle
+			else
+				scanLine(clippedPoints, color);																																																					// fill polygon (n > 3)
+		}
 
 		if(clippedPoints.size() > 1)																																	// whole/clipped polygon is inside clipping area
 		{
@@ -924,23 +921,23 @@ void ViewerWidget::drawPolygon(QColor color, int algType, int interpType)
 void ViewerWidget::drawCurve(QColor color, int curveType, int algType)
 {
 	if(isEmpty())
-	return;
+		return;
 
 	img->fill(Qt::white);
 
 	// leave approximated points on canvas
-	for (qsizetype i = 1; i < curvePoints.size(); i++)
+	for(qsizetype i = 1; i < curvePoints.size(); i++)
 		setPixel(curvePoints[i].point.x(), curvePoints[i].point.y(), color);
 
 	if(curveType == 0)																	// Hermite-Ferguson cubic
 	{
 		fergusovCubicCurve(color, algType);
 	}
-	else if (curveType == 1)
+	else if(curveType == 1)
 	{
 		bezierCurve(color, algType);
 	}
-	else if (curveType == 2)
+	else if(curveType == 2)
 	{
 		coonsoveCubicBSpline(color, algType);
 	}

@@ -97,7 +97,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 		else if(ui->comboBoxFigure->currentIndex() == 2 && ui->comboBoxCurveAlg->currentIndex() == 0)
 		{
 			QPoint pos = e->pos();
-			const int radius = 50;
+			const int radius = 50;																																	// radious of draggable area
 
 			for(int i = 0; i < w->curvePoints.size(); i++)
 			{
@@ -163,7 +163,6 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
 	if(ui->comboBoxFigure->currentIndex() == 2)
 	{
-		// TODO: add point or point+handle dragging
 		if(selectedType == SelectedType::NONE || selectedIndex < 0)
 			return;
 
@@ -197,8 +196,8 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 		vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
 	else if(ui->comboBoxFigure->currentIndex() == 1 && vW->sizeVertex() == 2)
 		vW->drawCircle(globalColor);
-
 }
+
 void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event)
 {
 	QWheelEvent* wheelEvent = static_cast<QWheelEvent*>(event);
@@ -211,8 +210,8 @@ void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event)
 		vW->scale(0.75, 0.75);
 
 	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
-
 }
+
 void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event)
 {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);

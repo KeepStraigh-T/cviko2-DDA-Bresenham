@@ -37,8 +37,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>627</width>
-         <height>737</height>
+         <width>651</width>
+         <height>742</height>
         </rect>
        </property>
       </widget>
@@ -52,7 +52,7 @@
      <x>0</x>
      <y>0</y>
      <width>979</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -216,6 +216,11 @@
           <item>
            <property name="text">
             <string>Bezier (Casteljauov)</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Coonsove B-spline</string>
            </property>
           </item>
          </widget>
