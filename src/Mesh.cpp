@@ -43,41 +43,47 @@ void Mesh::buildCubeMesh(double edgeLen)
 	faces[11] = {5, 4, 0};
 }
 
-void Mesh::buildUVSphereMesh(float radius, int theta_count, int phi_count)
+void Mesh::buildUVSphereMesh(double radius, int theta_count, int phi_count)
 {
 	clearMesh();
 	//std::size_t should_be_zero = vertices.size();
-	const float pi = std::numbers::pi_v<float>; // from C++20
-	const float two_pi = 2.f * pi;
+	const double pi = std::numbers::pi_v<double>; // from C++20
+	const double two_pi = 2.0 * pi;
 
-	const float theta_step = pi / theta_count; // theta step (vertical angle): {0, Pi}
-	const float phi_step = two_pi / phi_count; // phi step (horizontal angle): {0, 2Pi}
+	const double theta_step = pi / theta_count; // theta step (vertical angle): {0, Pi}
+	const double phi_step = two_pi / phi_count; // phi step (horizontal angle): {0, 2Pi}
 
-	const int num_vertices = (theta_count - 1) * phi_count + 2;
+	const int num_vertices = (theta_count - 1) * phi_count + 2; // +2 for top and bottom vertices
 	vertices.reserve((size_t)num_vertices);
-	vertices.resize((size_t)num_vertices);
+	// vertices.resize((size_t)num_vertices);
 	
 	// Add the top vertex
 	idx_t c = 0; // current index in vertices
-	vertices[c++] = {0.f, radius, 0.f};
+	vertices.push_back(Vertex(0.0, radius, 0.0));
 
 	// Generate the mid-section vertex grid
-	for(int i = 1; i <= (theta_count - 1); i++)
+	for(int i = 1; i <= theta_count - 1; i++)
 	{
-		float theta = i * theta_step;
+		double theta = i * theta_step;
 		for(int j = 0; j < phi_count; j++)
 		{
-			float phi = j * phi_step;
-			vertices[c++] = Vertex(
-															radius*sin(theta)*cos(phi),
-															radius*cos(theta),
-															-radius*sin(theta)*sin(phi)
-														);
+			double phi = j * phi_step;
+			//vertices.push_back( Vertex(
+			//												radius*sin(theta)*cos(phi),
+			//												radius*cos(theta),
+			//												-radius*sin(theta)*sin(phi)
+			//													)
+			//									);
+			const Vertex v(radius*sin(theta)*cos(phi), radius*cos(theta), -radius * sin(theta) * sin(phi));
+			//v.x = (double) radius*sin(theta)*cos(phi);
+			//v.y = (double) radius*cos(theta);
+			//v.z = (double) -radius * sin(theta) * sin(phi);
+			vertices.push_back(v);
 		}
 	}
 
 	// Add last bottom vertex
-	vertices[c] = Vertex(0.0, -radius, 0.0);
+	vertices.push_back(Vertex(0.0, -radius, 0.0));
 
 	const int num_faces = 2*phi_count + 2*phi_count*(theta_count - 2);
 	faces.reserve((size_t)num_faces);
@@ -91,16 +97,17 @@ void Mesh::buildUVSphereMesh(float radius, int theta_count, int phi_count)
 	faces[c++] = {0, phi_count, 1}; // add last face on the top cap
 
 	// Faces between the top and bottom rings
+	const idx_t north_pole_index = 1; 
 	for(int i = 0; i < (theta_count - 2); i++)
 	{
 		for(int j = 0; j < phi_count; j++)
 		{
-			int next_j = (j+1) % phi_count;
+			int next_j = (j+1) % phi_count; // wrap around to add last face on each parallel
 			const int index[4]{
-				1 + i*phi_count + j,
-				1 + (i + 1)*phi_count + j,
-				1 + (i + 1)*phi_count + next_j,
-				1 + i*phi_count + next_j
+				north_pole_index + i*phi_count + j,				
+				north_pole_index + (i + 1)*phi_count + j,
+				north_pole_index + (i + 1)*phi_count + next_j,
+				north_pole_index + i*phi_count + next_j
 			};
 
 			faces[c++] = {index[0], index[1], index[2]}; // first triangle
@@ -119,6 +126,7 @@ void Mesh::buildUVSphereMesh(float radius, int theta_count, int phi_count)
 		};
 	}
 
+	// add last face on bottom cap
 	faces[c] = {
 		south_pole_index,
 		south_pole_index - phi_count,

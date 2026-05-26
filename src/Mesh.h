@@ -5,11 +5,14 @@
 
 using idx_t = int;
 
-struct Vertex
+class Vertex
 {
-	double x = -1, y = -1, z = -1;
+public:
+	double x = 0.0;
+	double y = 0.0;
+	double z = 0.0;
 	Vertex() {};
-	Vertex(double xx, double yy, double zz)	{ x = xx; y = yy; z = zz; };
+	Vertex(double a, double b, double c) : x(a), y(b), z(c){ };
 };
 
 class Mesh
@@ -22,7 +25,7 @@ private:
 public:
 	Mesh();
 	void buildCubeMesh(double edgeLen);
-	void buildUVSphereMesh(float radius, int theta_count, int phi_count);
+	void buildUVSphereMesh(double radius, int theta_count, int phi_count);
 	void clearMesh();
 
 	const std::vector<Vertex>& getVertices() { return vertices; };

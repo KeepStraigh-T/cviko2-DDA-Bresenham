@@ -435,16 +435,16 @@ void ImageViewer::on_PB_BuildCube_clicked()
 void ImageViewer::on_PB_BuildSphere_clicked()
 {
 	double radius = ui->DSB_Radius->value();
-	int theta_count = ui->PB_Parallels->value() + 1; // +1 because n paralles split sphere into n+1 horizontal segments 
+	int theta_count = ui->PB_Parallels->value(); 
 	int phi_count = ui->PB_Meridians->value();
 
-	if(radius == 0.0 || theta_count < 2 || phi_count < 3)
+	if(radius == 0.0 || phi_count < 3)
 	{
 		QMessageBox::critical(this, "Error", "Please, enter Miridians >= 3 and Paralles >= 1.");
 		return;
 	}
-	mesh.buildUVSphereMesh(radius, theta_count, phi_count);
-		
+
+	mesh.buildUVSphereMesh(radius, theta_count + 1, phi_count); // +1 because n paralles split sphere into n+1 horizontal segments 	
 }
 
 
