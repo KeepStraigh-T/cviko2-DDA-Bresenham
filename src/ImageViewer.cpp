@@ -4,6 +4,13 @@ ImageViewer::ImageViewer(QWidget* parent)
 	: QMainWindow(parent), ui(new Ui::ImageViewerClass)
 {
 	ui->setupUi(this);
+
+	// Tabify 2 dock widgets
+	tabifyDockWidget(ui->dockWidget_1, ui->dockWidget_2);
+  ui->dockWidget_1->raise();
+  ui->dockWidget_2->setWindowTitle(QString::fromUtf8("3D"));
+	connect(this, &QMainWindow::tabifiedDockWidgetActivated, this, &ImageViewer::onTabifiedDockWidgetActivated);
+
 	vW = new ViewerWidget(QSize(600, 600), ui->scrollArea);
 	ui->scrollArea->setWidget(vW);
 
@@ -24,6 +31,10 @@ ImageViewer::ImageViewer(QWidget* parent)
 	ui->pushButtonSetColor->setStyleSheet(style_sheet);
 }
 
+ImageViewer::~ImageViewer()
+{
+	delete ui;
+}
 
 // Event filters
 bool ImageViewer::eventFilter(QObject* obj, QEvent* event)
@@ -39,11 +50,8 @@ bool ImageViewer::eventFilter(QObject* obj, QEvent* event)
 bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event)
 {
 	ViewerWidget* w = static_cast<ViewerWidget*>(obj);
-
 	if(!w)
-	{
 		return false;
-	}
 
 	if(event->type() == QEvent::MouseButtonPress)
 	{
@@ -69,13 +77,16 @@ bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event)
 	{
 		ViewerWidgetWheel(w, event);
 	}
-
+	// standard event processing
 	return QObject::eventFilter(obj, event);
 }
 
 void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
+
+	if(dock2IsVisible) // 3D dockTab
+		return;
 
 	if(e->button() == Qt::LeftButton)
 	{
@@ -161,6 +172,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
+
 	if(ui->comboBoxFigure->currentIndex() == 2)
 	{
 		if(selectedType == SelectedType::NONE || selectedIndex < 0)
@@ -192,6 +204,7 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 		return;
 
 	w->translation(e->pos());
+
 	if(ui->comboBoxFigure->currentIndex() == 0)
 		vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
 	else if(ui->comboBoxFigure->currentIndex() == 1 && vW->sizeVertex() == 2)
@@ -293,7 +306,7 @@ void ImageViewer::on_actionSave_as_triggered()
 
 		if(!saveImage(fileName))
 		{
-			msgBox.setText("Unable to save image.");
+			msgBox.setText("Unable to save vtk file.");
 			msgBox.setIcon(QMessageBox::Warning);
 		}
 		else
@@ -306,11 +319,6 @@ void ImageViewer::on_actionSave_as_triggered()
 }
 
 void ImageViewer::on_pushButtonClear_clicked()
-{
-	clearCanvas();
-}
-
-void ImageViewer::on_actionClear_triggered()
 {
 	clearCanvas();
 }
@@ -412,6 +420,177 @@ void ImageViewer::on_pushButtonFill_clicked()
 		vW->setFilled(false);
 
 	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
+}
+
+void ImageViewer::on_PB_BuildCube_clicked()
+{
+	double cubeEdgeLen = ui->DSB_EdgeSize->value();
+	if(cubeEdgeLen == 0.0)
+		QMessageBox::critical(this, "Error", "Please, enter a non-zero length of cube edge.");
+		
+
+	mesh.buildCubeMesh(cubeEdgeLen);
+}
+
+void ImageViewer::on_PB_BuildSphere_clicked()
+{
+	double radius = ui->DSB_Radius->value();
+	int theta_count = ui->PB_Parallels->value() + 1; // +1 because n paralles split sphere into n+1 horizontal segments 
+	int phi_count = ui->PB_Meridians->value();
+
+	if(radius == 0.0 || theta_count < 2 || phi_count < 3)
+	{
+		QMessageBox::critical(this, "Error", "Please, enter Miridians >= 3 and Paralles >= 1.");
+		return;
+	}
+	mesh.buildUVSphereMesh(radius, theta_count, phi_count);
+		
+}
+
+
+void ImageViewer::on_actionLoad_vtk_triggered()
+{
+	QString folder = settings.value("folder_img_load_path", "").toString();
+
+	QString fileFilter = "Vtk file (*vtk);;All files (*)";
+	QString fileName = QFileDialog::getOpenFileName(this, "Load image", folder, fileFilter);
+	if(fileName.isEmpty())
+		return;
+
+	QFileInfo fi(fileName);
+	settings.setValue("folder_img_load_path", fi.absoluteDir().absolutePath());
+
+	QFile fd(fileName);
+	if(!fd.open(QIODevice::ReadOnly | QIODevice::Text))
+	{
+		QMessageBox::critical(this, "Error", "Could not open file for reading.");
+		return;
+	}
+
+	QTextStream in(&fd);
+	
+	if(in.readLine() != "# vtk DataFile Version 3.0")
+	{
+		QMessageBox::critical(this, "Error", "Wrong file format");
+		return;
+	}
+
+	// 1. Skip setup until we hit the POINTS declaration
+	QString token;
+	int numVertices = 0;
+	while (!in.atEnd()) 
+	{
+		in >> token;
+		if (token == "POINTS") 
+		{
+			in >> numVertices;			// Reads the number of vertices
+			in >> token;
+			break;
+		}
+	}
+
+	// 2. Read exactly the number of vertices specified
+	std::vector<Vertex> meshVertices;
+	meshVertices.resize(numVertices - 2);
+	
+	for (int i = 0; i < numVertices; ++i)
+	{
+		double x, y, z;
+		in >> x >> y >> z;
+		meshVertices[i] = Vertex(x, y, z);
+	}
+	mesh.setVertices(meshVertices);
+
+	// 3. Find the POLYGONS section
+	int numFaces = 0;
+	int totalItems = 0;
+	while (!in.atEnd())
+	{
+		in >> token;
+		if (token == "POLYGONS")
+		{
+			in >> numFaces;   // Reads number of polygons
+			in >> totalItems; // Reads total integers in list
+			break;
+		}
+	}
+
+	// 4. Read exactly the number of faces specified
+	std::vector<std::array<idx_t, 3>> meshFaces;
+	meshFaces.reserve(numFaces);
+
+	for (int i = 0; i < numFaces; ++i)
+	{
+		int numPointsInFace;
+		idx_t v1, v2, v3;
+     
+		in >> numPointsInFace; // VTK format starts each polygon line with the vertex count (usually 3)
+		in >> v1 >> v2 >> v3;
+
+		meshFaces.push_back({v1, v2, v3});
+ }
+ mesh.setFaces(meshFaces);
+
+ fd.close();
+}
+
+void ImageViewer::on_actionSave_vtk_triggered()
+{
+	if(mesh.getVertices().empty() || mesh.getFaces().empty())
+		return;
+
+	QString folder = settings.value("folder_img_save_path", "").toString();
+	QString fileFilter = "Vtk file (*.vtk);;All files (*)";
+	QString fileName = QFileDialog::getSaveFileName(this, "Save vtk", folder, fileFilter);
+	if(!fileName.isEmpty())
+	{
+		QFileInfo fi(fileName);
+		settings.setValue("folder_img_save_path", fi.absoluteDir().absolutePath());
+
+		QFile fd(fileName);
+		if(!fd.open(QIODevice::WriteOnly | QIODevice::Text))
+		{
+			QMessageBox::critical(this, "Error", "Could not open file for writing.");
+			return;
+		}
+
+		QTextStream out(&fd);
+
+		out << "# vtk DataFile Version 3.0" << '\n';
+		out << "vtk output" << '\n';
+		out << "ASCII" << '\n';
+		out << "DATASET POLYDATA" << '\n';
+		out << "POINTS " << mesh.getVertices().size() << ' ' << "double" << '\n';
+
+		const std::vector<Vertex> meshVertices = mesh.getVertices();
+		for(idx_t i = 0; i < meshVertices.size(); i++)
+			out << (int) meshVertices[i].x << ' ' << (int) meshVertices[i].y << ' ' << (int) meshVertices[i].z << '\n';
+
+		const std::vector<std::array<idx_t, 3>> meshFaces = mesh.getFaces();
+		size_t nFaces = meshFaces.size();
+		out << "POLYGONS" << ' ' << nFaces << ' ' << nFaces * (meshFaces[0].size() + 1) << '\n';
+
+		for(idx_t i = 0; i < nFaces; i++)
+			out << meshFaces[0].size() << ' ' << meshFaces[i][0] << ' ' << meshFaces[i][1] << ' ' << meshFaces[i][2] << '\n';
+
+		fd.close();
+	}
+
+	if(mesh.getVertices().empty() || mesh.getFaces().empty());
+	return;
+}
+
+void ImageViewer::onTabifiedDockWidgetActivated(QDockWidget* dockWidget)
+{
+	if(dockWidget == ui->dockWidget_2)
+		dock2IsVisible = true;
+	else
+		dock2IsVisible = false;
+	
+	vW->clear();
+	uiAccessibility(true);
+	vW->setDrawActivated(true);
+	vW->setDragging(false);
 }
 
 

@@ -362,3 +362,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /build
+/build/HalfEdgeMesh.cpp
+/build/HalfEdgeMesh.h
+/src/HalfEdgeMesh.cpp
+/src/HalfEdgeMesh.h

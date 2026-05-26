@@ -4,6 +4,7 @@
 #include <QtWidgets>
 #include "ui_ImageViewer.h"
 #include "ViewerWidget.h"
+#include "Mesh.h"
 
 enum class SelectedType
 {
@@ -18,18 +19,18 @@ class ImageViewer: public QMainWindow
 
 public:
 	ImageViewer(QWidget* parent = Q_NULLPTR);
-	~ImageViewer() {
-		delete ui;
-	}
+	~ImageViewer();
 private:
-	Ui::ImageViewerClass* ui;
-	ViewerWidget* vW;
+	Ui::ImageViewerClass* ui = nullptr;
+	ViewerWidget* vW = nullptr;
+
 
 	QColor globalColor;
 	QSettings settings;
 	QMessageBox msgBox;
-
-	QButtonGroup* drawGroup;
+	//HalfEdgeMesh mesh;
+	Mesh mesh;
+	bool dock2IsVisible = false; // tab for 2D is selected
 
 	int selectedIndex = -1;
 	SelectedType selectedType = SelectedType::NONE;
@@ -59,8 +60,9 @@ private:
 private slots:
 	void on_actionOpen_triggered();
 	void on_actionSave_as_triggered();
-	void on_actionClear_triggered();
 	void on_actionExit_triggered();
+	void on_actionLoad_vtk_triggered();
+	void on_actionSave_vtk_triggered();
 	void on_comboBoxFigure_currentIndexChanged(int index);
 	void on_pushButtonRotate_clicked();
 	void on_pushButtonScale_clicked();
@@ -68,6 +70,9 @@ private slots:
 	void on_pushButtonSymmetry_clicked();
 	void on_pushButtonClear_clicked();
 	void on_pushButtonFill_clicked();
+	void onTabifiedDockWidgetActivated(QDockWidget* dockWidget);
+	void on_PB_BuildCube_clicked();
+	void on_PB_BuildSphere_clicked();
 
 	//Tools slots
 	void on_pushButtonSetColor_clicked();

@@ -12,7 +12,13 @@ struct ControlPoint
 	};
 };
 
-class ViewerWidget:public QWidget
+struct Point3D
+{
+	int x, y, z;
+	Point3D(int xx, int yy, int zz): x(xx), y(yy), z(zz) {};
+};
+
+class ViewerWidget: public QWidget
 {
 	Q_OBJECT
 private:
@@ -24,12 +30,10 @@ private:
 	QVector <QPoint> transformedVert;
 
 	bool drawActivated = true;
-
-	QPoint lastMousePos;
 	bool dragging = false;
-
 	bool areaIsFilled = false;
 
+	QPoint lastMousePos;
 	QPoint drawLineBegin = QPoint(0, 0);
 
 public:
@@ -37,7 +41,6 @@ public:
 	~ViewerWidget();
 	void resizeWidget(QSize size);
 
-public:
 	QVector <ControlPoint> curvePoints;
 
 	//Image functions
@@ -93,7 +96,6 @@ public:
 	void bezierCurve(QColor color, int algType);
 	void coonsoveCubicBSpline(QColor color, int algType);
 
-public:
 	// Vertices functions
 	void clearVertices();
 	void push_backVertex(QPoint point);
@@ -109,6 +111,7 @@ public:
 
 	int getImgWidth() { return img ? img->width() : 0; };
 	int getImgHeight() { return img ? img->height() : 0; };
+
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;

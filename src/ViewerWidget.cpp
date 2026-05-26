@@ -35,7 +35,7 @@ void ViewerWidget::resizeWidget(QSize size)
 void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
 {
 	if((start.x() == end.x()) && (start.y() == end.y()))					// dx/dy == 0/0
-		return;
+		return;			// y = mx + q (m = dy/dx)
 
 	int dx = end.x() - start.x();
 	int dy = end.y() - start.y();
@@ -412,15 +412,11 @@ void ViewerWidget::scanLineTriangle(QPoint p0, QPoint p1, QPoint p2, const QColo
 
 	// 2. now: p0.y <= p1.y <= p2.y
 
-	// handle special cases (aka sort by x (ascending))
+	// handle special cases (sort by x (ascending))
 	if(p1.y() == p2.y())
-	{
 		fillTopTriangle(p0, p1, p2, color, interpType, p0, p1, p2);
-	}
 	else if(p0.y() == p1.y())
-	{
 		fillBottomTriangle(p0, p1, p2, color, interpType, p0, p1, p2);
-	}
 	else
 	{
 		// 3. split triangle
@@ -764,9 +760,7 @@ void ViewerWidget::translation(QPoint currentMousePos)
 	for(QPoint& vertx : transformedVert)
 	{
 		vertx += delta;
-		//qDebug() << QString("(%1, %2)").arg(vertx.x()).arg(vertx.y());
 	}
-	//qDebug() << "\n";
 
 	lastMousePos = currentMousePos;
 	update();
@@ -865,13 +859,10 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
 	if(!img || !data) return;
 
 	if(algType == 0)
-	{
 		drawLineDDA(start, end, color);
-	}
 	else
-	{
 		drawLineBresenham(start, end, color);
-	}
+
 	update();
 }
 void ViewerWidget::drawPolygon(QColor color, int algType, int interpType)
@@ -883,25 +874,23 @@ void ViewerWidget::drawPolygon(QColor color, int algType, int interpType)
 
 	if(transformedVert.size() > 2)																																	// Polygon
 	{
-		//if(areaIsFilled)
-		//{
-		//	if(transformedVert.size() == 3)																																																							// change this maybe because it'll fill clipped polygon(vertices > 3) too
-		//		scanLineTriangle(transformedVert[0], transformedVert[1], transformedVert[2], color, interpType);																					// fill triangle
-		//	else
-		//		scanLine(transformedVert, color);																																																					// fill polygon (n > 3)
-		//}
-
-		//QVector <QPoint> clippedPoints = clippingPolygon();
-
-
-		QVector <QPoint> clippedPoints = clippingPolygon();
 		if(areaIsFilled)
 		{
-			if(clippedPoints.size() == 3)																																																							// change this maybe because it'll fill clipped polygon(vertices > 3) too
-				scanLineTriangle(clippedPoints[0], clippedPoints[1], clippedPoints[2], color, interpType);																					// fill triangle
+			if(transformedVert.size() == 3)																																																							// change this maybe because it'll fill clipped polygon(vertices > 3) too
+				scanLineTriangle(transformedVert[0], transformedVert[1], transformedVert[2], color, interpType);																					// fill triangle
 			else
-				scanLine(clippedPoints, color);																																																					// fill polygon (n > 3)
+				scanLine(transformedVert, color);																																																					// fill polygon (n > 3)
 		}
+		QVector <QPoint> clippedPoints = clippingPolygon();
+
+		//QVector <QPoint> clippedPoints = clippingPolygon();
+		//if(areaIsFilled)
+		//{
+		//	if(clippedPoints.size() == 3)																																																							// change this maybe because it'll fill clipped polygon(vertices > 3) too
+		//		scanLineTriangle(clippedPoints[0], clippedPoints[1], clippedPoints[2], color, interpType);																					// fill triangle
+		//	else
+		//		scanLine(clippedPoints, color);																																																					// fill polygon (n > 3)
+		//}
 
 		if(clippedPoints.size() > 1)																																	// whole/clipped polygon is inside clipping area
 		{
