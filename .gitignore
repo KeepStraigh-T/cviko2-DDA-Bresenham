@@ -366,3 +366,5 @@ FodyWeavers.xsd
 /build/HalfEdgeMesh.h
 /src/HalfEdgeMesh.cpp
 /src/HalfEdgeMesh.h
+/src/WorldSpace.cpp
+/src/WorldSpace.h
