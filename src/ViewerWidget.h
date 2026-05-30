@@ -5,7 +5,7 @@
 
 struct ControlPoint
 {
-	QPoint point;																							// main point
+	QPoint point;																// main point
 	QPoint handle;															// tangent point
 
 	ControlPoint(QPoint p, QPoint h): point(p), handle(h) {

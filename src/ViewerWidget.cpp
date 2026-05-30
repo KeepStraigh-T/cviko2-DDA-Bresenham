@@ -30,6 +30,8 @@ void ViewerWidget::resizeWidget(QSize size)
 	this->setMaximumSize(size);
 }
 
+
+
 /* Algorithms */
 // Line rasterization
 void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
@@ -827,7 +829,7 @@ void ViewerWidget::symmetry()
 		}
 	}
 	// Line symmetry
-	else if(transformedVert.size() == lineVetricesAmount)
+	else if(transformedVert.size() == lineVetricesAmount) 
 	{
 		// symmetry axis is parallel to Ox
 		if(qAbs(transformedVert.back().x() - transformedVert.front().x()) > qAbs(transformedVert.back().y() - transformedVert.front().y()))	// dy < dx
@@ -851,13 +853,14 @@ void ViewerWidget::symmetry()
 		}
 	}
 }
+
 /* Transformations */
 
 // Drawing call functions
 void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
 {
 	if(!img || !data) return;
-
+	
 	if(algType == 0)
 		drawLineDDA(start, end, color);
 	else
@@ -872,24 +875,24 @@ void ViewerWidget::drawPolygon(QColor color, int algType, int interpType)
 
 	img->fill(Qt::white);
 
-	if(transformedVert.size() > 2)																																	// Polygon
+	if(transformedVert.size() > 2)	// Polygon
 	{
 		if(areaIsFilled)
 		{
-			if(transformedVert.size() == 3)																																																							// change this maybe because it'll fill clipped polygon(vertices > 3) too
-				scanLineTriangle(transformedVert[0], transformedVert[1], transformedVert[2], color, interpType);																					// fill triangle
+			if(transformedVert.size() == 3)																																															// change this maybe because it'll fill clipped polygon(vertices > 3) too
+				scanLineTriangle(transformedVert[0], transformedVert[1], transformedVert[2], color, interpType);													// fill triangle
 			else
-				scanLine(transformedVert, color);																																																					// fill polygon (n > 3)
+				scanLine(transformedVert, color);																																													// fill polygon (n > 3)
 		}
 		QVector <QPoint> clippedPoints = clippingPolygon();
 
 		//QVector <QPoint> clippedPoints = clippingPolygon();
 		//if(areaIsFilled)
 		//{
-		//	if(clippedPoints.size() == 3)																																																							// change this maybe because it'll fill clipped polygon(vertices > 3) too
-		//		scanLineTriangle(clippedPoints[0], clippedPoints[1], clippedPoints[2], color, interpType);																					// fill triangle
+		//	if(clippedPoints.size() == 3)																																															// change this maybe because it'll fill clipped polygon(vertices > 3) too
+		//		scanLineTriangle(clippedPoints[0], clippedPoints[1], clippedPoints[2], color, interpType);															// fill triangle
 		//	else
-		//		scanLine(clippedPoints, color);																																																					// fill polygon (n > 3)
+		//		scanLine(clippedPoints, color);																																													// fill polygon (n > 3)
 		//}
 
 		if(clippedPoints.size() > 1)																																	// whole/clipped polygon is inside clipping area
@@ -919,17 +922,11 @@ void ViewerWidget::drawCurve(QColor color, int curveType, int algType)
 		setPixel(curvePoints[i].point.x(), curvePoints[i].point.y(), color);
 
 	if(curveType == 0)																	// Hermite-Ferguson cubic
-	{
 		fergusovCubicCurve(color, algType);
-	}
 	else if(curveType == 1)
-	{
 		bezierCurve(color, algType);
-	}
 	else if(curveType == 2)
-	{
 		coonsoveCubicBSpline(color, algType);
-	}
 }
 
 bool ViewerWidget::setImage(const QImage& inputImg)

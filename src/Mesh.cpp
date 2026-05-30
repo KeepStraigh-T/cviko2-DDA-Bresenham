@@ -1,6 +1,3 @@
-#include <cmath>
-#include <numbers>
-#include <iterator>
 #include "Mesh.h"
 
 using namespace std;
@@ -15,9 +12,9 @@ void Mesh::buildCubeMesh(double edgeLen)
 	clearMesh();
 
 	double x = edgeLen, y = edgeLen, z = edgeLen;
-	const int nVertices = 6;
+	const int num_CubeVertices = 8;
 
-	vertices.resize(nVertices);
+	vertices.resize(num_CubeVertices);
 	vertices[0] = Vertex( -x/2.0, -y/2.0, -z/2.0 ); // Index 0: Back-Bottom-Left
 	vertices[1] = Vertex( -x/2.0, y/2.0, -z/2.0 ); // Index 1: Back-Bottom-Right
 	vertices[2] = Vertex( x/2.0, y/2.0, -z/2.0 ); // Index 2: Front-Bottom-Right
@@ -46,20 +43,17 @@ void Mesh::buildCubeMesh(double edgeLen)
 void Mesh::buildUVSphereMesh(double radius, int theta_count, int phi_count)
 {
 	clearMesh();
-	//std::size_t should_be_zero = vertices.size();
-	const double pi = std::numbers::pi_v<double>; // from C++20
-	const double two_pi = 2.0 * pi;
 
 	const double theta_step = pi / theta_count; // theta step (vertical angle): {0, Pi}
 	const double phi_step = two_pi / phi_count; // phi step (horizontal angle): {0, 2Pi}
 
 	const int num_vertices = (theta_count - 1) * phi_count + 2; // +2 for top and bottom vertices
-	vertices.reserve((size_t)num_vertices);
-	// vertices.resize((size_t)num_vertices);
-	
+	vertices.resize((size_t)num_vertices);
+
+	idx_t c = 0;
+
 	// Add the top vertex
-	idx_t c = 0; // current index in vertices
-	vertices.push_back(Vertex(0.0, radius, 0.0));
+	vertices[c++] = (Vertex(0.0, radius, 0.0));
 
 	// Generate the mid-section vertex grid
 	for(int i = 1; i <= theta_count - 1; i++)
@@ -68,25 +62,19 @@ void Mesh::buildUVSphereMesh(double radius, int theta_count, int phi_count)
 		for(int j = 0; j < phi_count; j++)
 		{
 			double phi = j * phi_step;
-			//vertices.push_back( Vertex(
-			//												radius*sin(theta)*cos(phi),
-			//												radius*cos(theta),
-			//												-radius*sin(theta)*sin(phi)
-			//													)
-			//									);
-			const Vertex v(radius*sin(theta)*cos(phi), radius*cos(theta), -radius * sin(theta) * sin(phi));
-			//v.x = (double) radius*sin(theta)*cos(phi);
-			//v.y = (double) radius*cos(theta);
-			//v.z = (double) -radius * sin(theta) * sin(phi);
-			vertices.push_back(v);
+			vertices[c++] =  Vertex(
+															radius*sin(theta)*cos(phi),
+															radius*cos(theta),
+															-radius*sin(theta)*sin(phi) // - sign to respect right-hand rule
+															);
 		}
 	}
 
 	// Add last bottom vertex
-	vertices.push_back(Vertex(0.0, -radius, 0.0));
-
+	vertices[c] = Vertex(0.0, -radius, 0.0);
+	assert(c == num_vertices - 1);
+	 
 	const int num_faces = 2*phi_count + 2*phi_count*(theta_count - 2);
-	faces.reserve((size_t)num_faces);
 	faces.resize((size_t)num_faces);
 
 	c = 0;
@@ -132,6 +120,7 @@ void Mesh::buildUVSphereMesh(double radius, int theta_count, int phi_count)
 		south_pole_index - phi_count,
 		south_pole_index - 1
 	};
+	assert(c == num_faces - 1);
 }
 
 void Mesh::clearMesh()
@@ -140,5 +129,4 @@ void Mesh::clearMesh()
 	vertices.shrink_to_fit();
 	faces.clear();
 	faces.shrink_to_fit();
-
 }

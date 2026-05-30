@@ -4,7 +4,7 @@
 #include <QtWidgets>
 #include "ui_ImageViewer.h"
 #include "ViewerWidget.h"
-#include "Mesh.h"
+#include "Scene3D.h"
 
 enum class SelectedType
 {
@@ -24,12 +24,11 @@ private:
 	Ui::ImageViewerClass* ui = nullptr;
 	ViewerWidget* vW = nullptr;
 
-
 	QColor globalColor;
 	QSettings settings;
 	QMessageBox msgBox;
 	//HalfEdgeMesh mesh;
-	Mesh mesh;
+	Scene3D scene;
 	bool dock2IsVisible = false; // tab for 2D is selected
 
 	int selectedIndex = -1;
@@ -57,6 +56,8 @@ private:
 	void clearCanvas();
 	void uiAccessibility(bool state);
 
+	void renderScene();
+
 private slots:
 	void on_actionOpen_triggered();
 	void on_actionSave_as_triggered();
@@ -71,8 +72,11 @@ private slots:
 	void on_pushButtonClear_clicked();
 	void on_pushButtonFill_clicked();
 	void onTabifiedDockWidgetActivated(QDockWidget* dockWidget);
-	void on_PB_BuildCube_clicked();
-	void on_PB_BuildSphere_clicked();
+	void on_PB_RenderObject_clicked();
+	void on_CB_Object_currentIndexChanged(int idx);
+	void on_HSB_Zenit_valueChanged(int newValue);
+	void on_HSB_Azimut_valueChanged(int newZenitVal);
+	void on_HS_Distance_valueChanged(int newDistance);
 
 	//Tools slots
 	void on_pushButtonSetColor_clicked();

@@ -7,11 +7,11 @@ ImageViewer::ImageViewer(QWidget* parent)
 
 	// Tabify 2 dock widgets
 	tabifyDockWidget(ui->dockWidget_1, ui->dockWidget_2);
-  ui->dockWidget_1->raise();
-  ui->dockWidget_2->setWindowTitle(QString::fromUtf8("3D"));
+	ui->dockWidget_1->raise();
+	ui->dockWidget_2->setWindowTitle(QString::fromUtf8("3D"));
 	connect(this, &QMainWindow::tabifiedDockWidgetActivated, this, &ImageViewer::onTabifiedDockWidgetActivated);
 
-	vW = new ViewerWidget(QSize(600, 600), ui->scrollArea);
+	vW = new ViewerWidget(QSize(1500, 1000), ui->scrollArea);
 	ui->scrollArea->setWidget(vW);
 
 	QSizePolicy policy = ui->scrollArea->sizePolicy();
@@ -26,7 +26,7 @@ ImageViewer::ImageViewer(QWidget* parent)
 	vW->setObjectName("ViewerWidget");
 	vW->installEventFilter(this);
 
-	globalColor = Qt::red;
+	globalColor = Qt::darkBlue;
 	QString style_sheet = QString("background-color: %1;").arg(globalColor.name(QColor::HexRgb));
 	ui->pushButtonSetColor->setStyleSheet(style_sheet);
 }
@@ -34,6 +34,19 @@ ImageViewer::ImageViewer(QWidget* parent)
 ImageViewer::~ImageViewer()
 {
 	delete ui;
+}
+
+void ImageViewer::onTabifiedDockWidgetActivated(QDockWidget* dockWidget)
+{
+	if(dockWidget == ui->dockWidget_2)
+		dock2IsVisible = true;
+	else
+		dock2IsVisible = false;
+	
+	vW->clear();
+	uiAccessibility(true);
+	vW->setDrawActivated(true);
+	vW->setDragging(false);
 }
 
 // Event filters
@@ -279,9 +292,7 @@ void ImageViewer::on_actionOpen_triggered()
 	QString fileFilter = "Image data (*.bmp *.gif *.jpg *.jpeg *.png *.pbm *.pgm *.ppm *.xbm *.xpm);;All files (*)";
 	QString fileName = QFileDialog::getOpenFileName(this, "Load image", folder, fileFilter);
 	if(fileName.isEmpty())
-	{
 		return;
-	}
 
 	QFileInfo fi(fileName);
 	settings.setValue("folder_img_load_path", fi.absoluteDir().absolutePath());
@@ -367,7 +378,6 @@ void ImageViewer::on_pushButtonScale_clicked()
 
 	vW->scale(ui->xFactorScaleSpinBox->value(), ui->yFactorScaleSpinBox->value());
 	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
-
 }
 
 void ImageViewer::uiAccessibility(bool state)
@@ -422,30 +432,6 @@ void ImageViewer::on_pushButtonFill_clicked()
 	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
 }
 
-void ImageViewer::on_PB_BuildCube_clicked()
-{
-	double cubeEdgeLen = ui->DSB_EdgeSize->value();
-	if(cubeEdgeLen == 0.0)
-		QMessageBox::critical(this, "Error", "Please, enter a non-zero length of cube edge.");
-		
-
-	mesh.buildCubeMesh(cubeEdgeLen);
-}
-
-void ImageViewer::on_PB_BuildSphere_clicked()
-{
-	double radius = ui->DSB_Radius->value();
-	int theta_count = ui->PB_Parallels->value(); 
-	int phi_count = ui->PB_Meridians->value();
-
-	if(radius == 0.0 || phi_count < 3)
-	{
-		QMessageBox::critical(this, "Error", "Please, enter Miridians >= 3 and Paralles >= 1.");
-		return;
-	}
-
-	mesh.buildUVSphereMesh(radius, theta_count + 1, phi_count); // +1 because n paralles split sphere into n+1 horizontal segments 	
-}
 
 
 void ImageViewer::on_actionLoad_vtk_triggered()
@@ -491,7 +477,7 @@ void ImageViewer::on_actionLoad_vtk_triggered()
 
 	// 2. Read exactly the number of vertices specified
 	std::vector<Vertex> meshVertices;
-	meshVertices.resize(numVertices - 2);
+	meshVertices.resize(numVertices);
 	
 	for (int i = 0; i < numVertices; ++i)
 	{
@@ -499,7 +485,7 @@ void ImageViewer::on_actionLoad_vtk_triggered()
 		in >> x >> y >> z;
 		meshVertices[i] = Vertex(x, y, z);
 	}
-	mesh.setVertices(meshVertices);
+	scene.objMesh.setVertices(meshVertices);
 
 	// 3. Find the POLYGONS section
 	int numFaces = 0;
@@ -523,20 +509,20 @@ void ImageViewer::on_actionLoad_vtk_triggered()
 	{
 		int numPointsInFace;
 		idx_t v1, v2, v3;
-     
+		 
 		in >> numPointsInFace; // VTK format starts each polygon line with the vertex count (usually 3)
 		in >> v1 >> v2 >> v3;
 
 		meshFaces.push_back({v1, v2, v3});
- }
- mesh.setFaces(meshFaces);
+	}
+	scene.objMesh.setFaces(meshFaces);
 
- fd.close();
+	fd.close();
 }
 
 void ImageViewer::on_actionSave_vtk_triggered()
 {
-	if(mesh.getVertices().empty() || mesh.getFaces().empty())
+	if(scene.objMesh.getVertices().empty() || scene.objMesh.getFaces().empty())
 		return;
 
 	QString folder = settings.value("folder_img_save_path", "").toString();
@@ -560,13 +546,13 @@ void ImageViewer::on_actionSave_vtk_triggered()
 		out << "vtk output" << '\n';
 		out << "ASCII" << '\n';
 		out << "DATASET POLYDATA" << '\n';
-		out << "POINTS " << mesh.getVertices().size() << ' ' << "double" << '\n';
+		out << "POINTS " << scene.objMesh.getVertices().size() << ' ' << "double" << '\n';
 
-		const std::vector<Vertex> meshVertices = mesh.getVertices();
+		const std::vector<Vertex> meshVertices = scene.objMesh.getVertices();
 		for(idx_t i = 0; i < meshVertices.size(); i++)
 			out << (int) meshVertices[i].x << ' ' << (int) meshVertices[i].y << ' ' << (int) meshVertices[i].z << '\n';
 
-		const std::vector<std::array<idx_t, 3>> meshFaces = mesh.getFaces();
+		const std::vector<std::array<idx_t, 3>> meshFaces = scene.objMesh.getFaces();
 		size_t nFaces = meshFaces.size();
 		out << "POLYGONS" << ' ' << nFaces << ' ' << nFaces * (meshFaces[0].size() + 1) << '\n';
 
@@ -576,21 +562,102 @@ void ImageViewer::on_actionSave_vtk_triggered()
 		fd.close();
 	}
 
-	if(mesh.getVertices().empty() || mesh.getFaces().empty());
+	if(scene.objMesh.getVertices().empty() || scene.objMesh.getFaces().empty());
 	return;
 }
 
-void ImageViewer::onTabifiedDockWidgetActivated(QDockWidget* dockWidget)
+void ImageViewer::on_CB_Object_currentIndexChanged(int idx)
 {
-	if(dockWidget == ui->dockWidget_2)
-		dock2IsVisible = true;
-	else
-		dock2IsVisible = false;
-	
-	vW->clear();
-	uiAccessibility(true);
-	vW->setDrawActivated(true);
-	vW->setDragging(false);
+	if(idx == 0)
+	{
+		ui->labelCubeLength->show();
+		ui->DSB_EdgeSize->show();
+		ui->labelRadius->hide();
+		ui->DSB_Radius->hide();
+		ui->labelParallels->hide();
+		ui->SB_Parallels->hide();
+		ui->labelMeridians->hide();
+		ui->SB_Meridians->hide();
+	}
+	else if(idx == 1)
+	{
+		ui->labelCubeLength->hide();
+		ui->DSB_EdgeSize->hide();
+		ui->labelRadius->show();
+		ui->DSB_Radius->show();
+		ui->labelParallels->show();
+		ui->SB_Parallels->show();
+		ui->labelMeridians->show();
+		ui->SB_Meridians->show();
+	}
 }
 
+void ImageViewer::renderScene()
+{
+	scene.cam.setCamera(ui->HSB_Zenit->value(), ui->HSB_Azimut->value(), ui->HS_Distance->value());
+	scene.transformToCameraSpace();
+	scene.project(ui->CB_ProjType->currentIndex(), ui->HS_Distance->value());
 
+	const std::vector<std::array<idx_t, 3>>& faces = scene.objMesh.getFaces();
+	int w = vW->getImage()->width();
+	int h = vW->getImage()->height();
+	// draw object
+	for(size_t i = 0; i < faces.size(); i++) // 3 lines per triangle
+	{
+		QPoint p1(scene.sceneVertices[faces[i][0]].x + w/2.0 + 0.5, scene.sceneVertices[faces[i][0]].y + h/2.0 + 0.5);
+		QPoint p2(scene.sceneVertices[faces[i][1]].x + w/2.0 + 0.5, scene.sceneVertices[faces[i][1]].y + h/2.0 + 0.5);
+		QPoint p3(scene.sceneVertices[faces[i][2]].x + w/2.0 + 0.5, scene.sceneVertices[faces[i][2]].y + h/2.0 + 0.5);
+
+		vW->drawLineBresenham(p1, p2, globalColor);
+		vW->drawLineBresenham(p2, p3, globalColor);
+		vW->drawLineBresenham(p3, p1, globalColor);
+	}
+}
+
+void ImageViewer::on_PB_RenderObject_clicked()
+{
+	vW->clear();
+
+	if(ui->CB_Object->currentText() == "Cube")
+	{
+		double cubeEdgeLen = ui->DSB_EdgeSize->value();
+		if(cubeEdgeLen == 0.0)
+		{
+			QMessageBox::critical(this, "Error", "Please, enter the length of cube edge.");
+			return;
+		}
+		scene.objMesh.buildCubeMesh(cubeEdgeLen);
+	}
+	else if(ui->CB_Object->currentText() == "Sphere")
+	{
+		if(ui->DSB_Radius->value() == 0.0)
+		{
+			QMessageBox::critical(this, "Error", "Please, enter the radius of sphere.");
+			return;
+		}
+		// +1 because n paralles split sphere into n+1 horizontal segments
+		scene.objMesh.buildUVSphereMesh(ui->DSB_Radius->value(), ui->SB_Parallels->value() + 1, ui->SB_Meridians->value());
+	}
+
+	renderScene();
+}
+
+void ImageViewer::on_HSB_Zenit_valueChanged(int newZenitVal)
+{
+	vW->clear();
+	renderScene();
+}
+
+void ImageViewer::on_HSB_Azimut_valueChanged(int newAzimutVal)
+{
+	vW->clear();
+
+	renderScene();
+}
+
+void ImageViewer::on_HS_Distance_valueChanged(int newDistance)
+{
+	vW->clear();
+
+	renderScene();
+}
