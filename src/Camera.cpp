@@ -1,9 +1,19 @@
 #include "Camera.h"
 
+Camera::Camera()
+{
+	viewVolume.x.min = -500.0;
+	viewVolume.x.max= 500.0;
+	viewVolume.y.min = -500.0;
+	viewVolume.y.max = 500.0;
+	viewVolume.z.min = 200.0;
+	viewVolume.z.max = 200.0;
+}
+
 void Camera::setCamera(double zenit, double azimut, int distance)
 {
-	position.x = (double)distance;
-	position.y = (double)distance;
+	position.x = 0.0;
+	position.y = 0.0;
 	position.z = (double)distance;
 
 	// convert angles to radians

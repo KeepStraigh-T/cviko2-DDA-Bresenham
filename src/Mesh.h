@@ -6,6 +6,7 @@
 #include <numbers>
 #include <iterator>
 #include <cassert>
+#include <qcolor.h>
 
 using idx_t = int;
 
@@ -32,6 +33,7 @@ class Mesh
 private:
 	std::vector<Vertex> vertices;
 	std::vector<std::array<idx_t, 3>> faces; // triangles
+	std::vector<QColor> facesColors; // cube sides colors
 
 public:
 	Mesh();
@@ -39,8 +41,11 @@ public:
 	void buildUVSphereMesh(double radius, int theta_count, int phi_count);
 	void clearMesh();
 
-	const std::vector<Vertex>& getVertices() { return vertices; };
-	const std::vector<std::array<idx_t, 3>>& getFaces() { return faces; };
+	const std::vector<Vertex>& getVertices() const { return vertices; };
+	const Vertex* vertex(idx_t i) const { return i < vertices.size() ? &vertices[i] : nullptr; };
+	const std::vector<std::array<idx_t, 3>>& getFaces() const { return faces; };
+	const std::array<idx_t, 3>* face(idx_t i) const { return i < faces.size() ? &faces[i] : nullptr; };
+	const std::vector<QColor>& getFacesColors() const { return facesColors; };
 
 	void setVertices(const std::vector<Vertex>& meshVertices) { vertices = meshVertices; };
 	void setFaces(const std::vector<std::array<idx_t, 3>>& meshFaces) { faces = meshFaces; };

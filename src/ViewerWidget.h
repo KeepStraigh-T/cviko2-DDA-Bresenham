@@ -87,9 +87,9 @@ public:
 	QVector<QPoint> clippingLine();
 	QVector<QPoint> clippingPolygon();
 	void scanLine(const QVector <QPoint>& vertices, const QColor& color);
-	void scanLineTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType);
-	void fillTopTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2);
-	void fillBottomTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2);
+	void scanLineTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, std::vector<double>* zBuffer = nullptr, double z_const = std::numeric_limits<double>::lowest());
+	void fillTopTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2, std::vector<double>* zBuffer = nullptr, double z_const = std::numeric_limits<double>::lowest());
+	void fillBottomTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2, std::vector<double>* zBuffer = nullptr, double z_const = std::numeric_limits<double>::lowest());
 	QColor nearestNeighbor(int x, int y, const QPoint& t0, const QPoint& t1, const QPoint& t2);
 	QColor barycentricInterp(int x, int y, const QPoint& t0, const QPoint& t1, const QPoint& t2);
 	void fergusovCubicCurve(QColor color, int algType);

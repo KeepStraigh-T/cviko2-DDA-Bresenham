@@ -405,7 +405,8 @@ void ViewerWidget::scanLine(const QVector <QPoint>& nodes, const QColor& color)
 		y++;
 	}
 }
-void ViewerWidget::scanLineTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType)
+
+void ViewerWidget::scanLineTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, std::vector<double>* Zbuffer, double z_const)
 {
 	// 1. sort by y (ascending)
 	if(p1.y() < p0.y()) std::swap(p0, p1);
@@ -415,14 +416,12 @@ void ViewerWidget::scanLineTriangle(QPoint p0, QPoint p1, QPoint p2, const QColo
 	// 2. now: p0.y <= p1.y <= p2.y
 
 	// handle special cases (sort by x (ascending))
-	if(p1.y() == p2.y())
-		fillTopTriangle(p0, p1, p2, color, interpType, p0, p1, p2);
-	else if(p0.y() == p1.y())
-		fillBottomTriangle(p0, p1, p2, color, interpType, p0, p1, p2);
-	else
-	{
-		// 3. split triangle
-
+	//if(p1.y() == p2.y())
+	//	fillTopTriangle(p0, p1, p2, color, interpType, p0, p1, p2, Zbuffer, z_const);
+	//else if(p0.y() == p1.y())
+	//	fillBottomTriangle(p0, p1, p2, color, interpType, p0, p1, p2, Zbuffer, z_const);
+	//else		// 3. split triangle
+	//{
 		double alpha = (double) (p2.x() - p0.x()) / (p2.y() - p0.y());
 
 		int px = p0.x() + alpha * (p1.y() - p0.y()) + 0.5;
@@ -431,17 +430,18 @@ void ViewerWidget::scanLineTriangle(QPoint p0, QPoint p1, QPoint p2, const QColo
 		// Decide left/right
 		if(p1.x() < P.x())
 		{
-			fillTopTriangle(p0, p1, P, color, interpType, p0, p1, p2);
-			fillBottomTriangle(p1, P, p2, color, interpType, p0, p1, p2);
+			fillTopTriangle(p0, p1, P, color, interpType, p0, p1, p2, Zbuffer, z_const);
+			fillBottomTriangle(p1, P, p2, color, interpType, p0, p1, p2, Zbuffer, z_const);
 		}
 		else
 		{
-			fillTopTriangle(p0, P, p1, color, interpType, p0, p1, p2);
-			fillBottomTriangle(P, p1, p2, color, interpType, p0, p1, p2);
+			fillTopTriangle(p0, P, p1, color, interpType, p0, p1, p2, Zbuffer, z_const);
+			fillBottomTriangle(P, p1, p2, color, interpType, p0, p1, p2, Zbuffer, z_const);
 		}
-	}
+	//}
 }
-void ViewerWidget::fillTopTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2)								//p0 -> p1/P -> P/p1
+
+void ViewerWidget::fillTopTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2, std::vector<double>* ZBuffer, double z_const)								//p0 -> p1/P -> P/p1
 {
 	double w1 = (p1.x() - p0.x()) / (double) (p1.y() - p0.y());
 	double w2 = (p2.x() - p0.x()) / (double) (p2.y() - p0.y());
@@ -451,59 +451,35 @@ void ViewerWidget::fillTopTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor
 	double x1 = p0.x();
 	double x2 = p0.x();
 
-	// do not need to compare x1 and x2 for minority (as in second function for bottom triangle) beacause x1 and x2 start in one point (vertex p0)
-
-	if(interpType == 1)
+	while(y < ymax)
 	{
-		while(y < ymax)
+		int xStart = (int) x1;									// cell number
+		int xEnd = (int) x2;														// floor number
+		while(xStart <= xEnd)
 		{
-			int xStart = (int) (x1 + 1.0);									// ceil number
-			int xEnd = (int) x2;														// floor number
-			while(xStart <= xEnd)
-			{
+			if(interpType == 1)
 				setPixel(xStart, y, nearestNeighbor(xStart, y, t0, t1, t2));
-				xStart++;
-			}
-			x1 += w1;
-			x2 += w2;
-			y++;
-		}
-	}
-	else if(interpType == 2)
-	{
-		while(y < ymax)
-		{
-			int xStart = (int) (x1 + 1.0);									// ceil number
-			int xEnd = (int) x2;														// floor number
-			while(xStart <= xEnd)
-			{
+			else if(interpType == 2)
 				setPixel(xStart, y, barycentricInterp(xStart, y, t0, t1, t2));
-				xStart++;
-			}
-			x1 += w1;
-			x2 += w2;
-			y++;
-		}
-	}
-	else
-	{
-		while(y < ymax)
-		{
-			int xStart = (int) (x1 + 1.0);									// ceil number
-			int xEnd = (int) x2;														// floor number
-			while(xStart <= xEnd)
+			else
 			{
-				setPixel(xStart, y, color);
+				if(z_const == std::numeric_limits<double>::lowest())
+					setPixel(xStart, y, color);
+				else if(ZBuffer->at(y * img->width() + xStart) < z_const)
+				{
+					ZBuffer->at(y * img->width() + xStart) = z_const;
+					setPixel(xStart, y, color);
+				}
 				xStart++;
 			}
+		}
 			x1 += w1;
 			x2 += w2;
 			y++;
-		}
 	}
 }
 
-void ViewerWidget::fillBottomTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2)						//P/p1 -> p1/P -> p2
+void ViewerWidget::fillBottomTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor& color, int interpType, QPoint t0, QPoint t1, QPoint t2, std::vector<double>* ZBuffer, double z_const)						//P/p1 -> p1/P -> p2
 {
 	double w1 = (p2.x() - p0.x()) / (double) (p2.y() - p0.y());
 	double w2 = (p2.x() - p1.x()) / (double) (p2.y() - p1.y());
@@ -516,55 +492,34 @@ void ViewerWidget::fillBottomTriangle(QPoint p0, QPoint p1, QPoint p2, const QCo
 	if(x1 > x2)															//		p0			p1
 		std::swap(x1, x2);										//				p2
 
-	if(interpType == 1)
+	while(y < ymax)
 	{
-		while(y < ymax)
+		int xStart = (int) x1;									// cell number
+		int xEnd = (int) x2;														// floor number
+		while(xStart <= xEnd)
 		{
-			int xStart = (int) (x1 + 1.0);									// ceil number
-			int xEnd = (int) x2;														// floor number
-			while(xStart <= xEnd)
-			{
+			if(interpType == 1)
 				setPixel(xStart, y, nearestNeighbor(xStart, y, t0, t1, t2));
-				xStart++;
-			}
-			x1 += w1;
-			x2 += w2;
-			y++;
-		}
-	}
-	else if(interpType == 2)
-	{
-		while(y < ymax)
-		{
-			int xStart = (int) (x1 + 1.0);									// ceil number
-			int xEnd = (int) x2;														// floor number
-			while(xStart <= xEnd)
-			{
+			else if(interpType == 2)
 				setPixel(xStart, y, barycentricInterp(xStart, y, t0, t1, t2));
-				xStart++;
-			}
-			x1 += w1;
-			x2 += w2;
-			y++;
-		}
-	}
-	else
-	{
-		while(y < ymax)
-		{
-			int xStart = (int) (x1 + 1.0);									// ceil number
-			int xEnd = (int) x2;														// floor number
-			while(xStart <= xEnd)
+			else
 			{
-				setPixel(xStart, y, color);
-				xStart++;
+				if(z_const == std::numeric_limits<double>::lowest())
+					setPixel(xStart, y, color);
+				else if(ZBuffer->at(y * img->width() + xStart) < z_const)
+				{
+					ZBuffer->at(y * img->width() + xStart) = z_const;
+					setPixel(xStart, y, color);
+				}
 			}
-			x1 += w1;
-			x2 += w2;
-			y++;
+			xStart++;
 		}
+		x1 += w1;
+		x2 += w2;
+		y++;
 	}
 }
+
 QColor ViewerWidget::nearestNeighbor(int x, int y, const QPoint& t0, const QPoint& t1, const QPoint& t2)
 {
 	int dx0 = x - t0.x();
@@ -595,6 +550,7 @@ QColor ViewerWidget::nearestNeighbor(int x, int y, const QPoint& t0, const QPoin
 
 	return (idx == 0) ? c0 : (idx == 1) ? c1 : c2;
 }
+
 QColor ViewerWidget::barycentricInterp(int x, int y, const QPoint& t0, const QPoint& t1, const QPoint& t2)
 {
 	// celkova plocha trojuholnika T0,T1,T2

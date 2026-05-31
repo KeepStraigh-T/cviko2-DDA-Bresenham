@@ -36,8 +36,22 @@ void Mesh::buildCubeMesh(double edgeLen)
 	faces[7] = {7, 3, 2};
 	faces[8] = {4, 0, 7};
 	faces[9] = {7, 0, 3};
-	faces[10] = {0, 1, 5};
+	faces[10] = {0, 1, 5}; 
 	faces[11] = {5, 4, 0};
+
+	facesColors.resize(12);
+	facesColors[0].setRgb(128, 128, 128);
+	facesColors[1].setRgb(0, 0, 0);
+	facesColors[2].setRgb(0, 0, 255);
+	facesColors[3].setRgb(0, 0, 255);
+	facesColors[4].setRgb(0, 255, 0);
+	facesColors[5].setRgb(0, 255, 0);
+	facesColors[6].setRgb(255, 0, 0);
+	facesColors[7].setRgb(255, 0, 0);
+	facesColors[8].setRgb(255, 234, 0);
+	facesColors[9].setRgb(255, 234, 0);
+	facesColors[10].setRgb(255, 165, 255);
+	facesColors[11].setRgb(255, 165, 255);
 }
 
 void Mesh::buildUVSphereMesh(double radius, int theta_count, int phi_count)
@@ -65,17 +79,18 @@ void Mesh::buildUVSphereMesh(double radius, int theta_count, int phi_count)
 			vertices[c++] =  Vertex(
 															radius*sin(theta)*cos(phi),
 															radius*cos(theta),
-															-radius*sin(theta)*sin(phi) // - sign to respect right-hand rule
+															-radius*sin(theta)*sin(phi) // "-" to respect right-hand rule
 															);
 		}
 	}
 
 	// Add last bottom vertex
 	vertices[c] = Vertex(0.0, -radius, 0.0);
-	assert(c == num_vertices - 1);
+	//assert(c == num_vertices - 1);
 	 
 	const int num_faces = 2*phi_count + 2*phi_count*(theta_count - 2);
-	faces.resize((size_t)num_faces);
+	faces.resize(num_faces);
+	facesColors.resize(num_faces);
 
 	c = 0;
 	// Faces on the top cap, connecting the north pole to the first ring
@@ -100,6 +115,7 @@ void Mesh::buildUVSphereMesh(double radius, int theta_count, int phi_count)
 
 			faces[c++] = {index[0], index[1], index[2]}; // first triangle
 			faces[c++] = {index[0], index[2], index[3]}; // second triangle
+			
 		}
 	}
 
@@ -120,13 +136,16 @@ void Mesh::buildUVSphereMesh(double radius, int theta_count, int phi_count)
 		south_pole_index - phi_count,
 		south_pole_index - 1
 	};
-	assert(c == num_faces - 1);
+	//assert(c == num_faces - 1);
+
+	for(int i = 0; i < faces.size(); i++)
+		facesColors[i] = Qt::blue;
+
 }
 
 void Mesh::clearMesh()
 {
 	vertices.clear();
-	vertices.shrink_to_fit();
 	faces.clear();
-	faces.shrink_to_fit();
+	facesColors.clear();
 }

@@ -11,7 +11,7 @@ ImageViewer::ImageViewer(QWidget* parent)
 	ui->dockWidget_2->setWindowTitle(QString::fromUtf8("3D"));
 	connect(this, &QMainWindow::tabifiedDockWidgetActivated, this, &ImageViewer::onTabifiedDockWidgetActivated);
 
-	vW = new ViewerWidget(QSize(1500, 1000), ui->scrollArea);
+	vW = new ViewerWidget(QSize(700, 700), ui->scrollArea);
 	ui->scrollArea->setWidget(vW);
 
 	QSizePolicy policy = ui->scrollArea->sizePolicy();
@@ -26,7 +26,7 @@ ImageViewer::ImageViewer(QWidget* parent)
 	vW->setObjectName("ViewerWidget");
 	vW->installEventFilter(this);
 
-	globalColor = Qt::darkBlue;
+	globalColor = Qt::black;
 	QString style_sheet = QString("background-color: %1;").arg(globalColor.name(QColor::HexRgb));
 	ui->pushButtonSetColor->setStyleSheet(style_sheet);
 }
@@ -599,19 +599,37 @@ void ImageViewer::renderScene()
 	scene.project(ui->CB_ProjType->currentIndex(), ui->HS_Distance->value());
 
 	const std::vector<std::array<idx_t, 3>>& faces = scene.objMesh.getFaces();
+	const std::vector<QColor>& facesColors = scene.getFacesColors();
+	const std::vector<Vertex>& sceneVertices = scene.getSceneVertices();
+
 	int w = vW->getImage()->width();
 	int h = vW->getImage()->height();
-	// draw object
-	for(size_t i = 0; i < faces.size(); i++) // 3 lines per triangle
+	scene.initZBuffer(h * w);
+	// draw faces
+	for(size_t i = 0; i < faces.size(); i++)
 	{
-		QPoint p1(scene.sceneVertices[faces[i][0]].x + w/2.0 + 0.5, scene.sceneVertices[faces[i][0]].y + h/2.0 + 0.5);
-		QPoint p2(scene.sceneVertices[faces[i][1]].x + w/2.0 + 0.5, scene.sceneVertices[faces[i][1]].y + h/2.0 + 0.5);
-		QPoint p3(scene.sceneVertices[faces[i][2]].x + w/2.0 + 0.5, scene.sceneVertices[faces[i][2]].y + h/2.0 + 0.5);
+		QPoint p1(sceneVertices[faces[i][0]].x + w/2.0 + 0.5, sceneVertices[faces[i][0]].y + h/2.0 + 0.5);
+		QPoint p2(sceneVertices[faces[i][1]].x + w/2.0 + 0.5, sceneVertices[faces[i][1]].y + h/2.0 + 0.5);
+		QPoint p3(sceneVertices[faces[i][2]].x + w/2.0 + 0.5, sceneVertices[faces[i][2]].y + h/2.0 + 0.5);
+
+		//if(ui->CB_Object->currentText() == "Cube")
+		//{
+			double z_const = (sceneVertices[faces[i][0]].z + sceneVertices[faces[i][1]].z + sceneVertices[faces[i][2]].z) / 3.0; // average const z-coordinate for each pixel in 2D triangle
+			int flatFilling = 0;
+			vW->scanLineTriangle(p1, p2, p3, facesColors[i], flatFilling, scene.getZBuffer(), z_const);
+		//}
+	}
+	// draw Wireframe
+	/*for(size_t i = 0; i < faces.size(); i++)
+	{
+		QPoint p1(sceneVertices[faces[i][0]].x + w/2.0 + 0.5, sceneVertices[faces[i][0]].y + h/2.0 + 0.5);
+		QPoint p2(sceneVertices[faces[i][1]].x + w/2.0 + 0.5, sceneVertices[faces[i][1]].y + h/2.0 + 0.5);
+		QPoint p3(sceneVertices[faces[i][2]].x + w/2.0 + 0.5, sceneVertices[faces[i][2]].y + h/2.0 + 0.5);
 
 		vW->drawLineBresenham(p1, p2, globalColor);
 		vW->drawLineBresenham(p2, p3, globalColor);
 		vW->drawLineBresenham(p3, p1, globalColor);
-	}
+	}*/
 }
 
 void ImageViewer::on_PB_RenderObject_clicked()
@@ -651,13 +669,11 @@ void ImageViewer::on_HSB_Zenit_valueChanged(int newZenitVal)
 void ImageViewer::on_HSB_Azimut_valueChanged(int newAzimutVal)
 {
 	vW->clear();
-
 	renderScene();
 }
 
 void ImageViewer::on_HS_Distance_valueChanged(int newDistance)
 {
 	vW->clear();
-
 	renderScene();
 }
