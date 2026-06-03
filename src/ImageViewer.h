@@ -72,10 +72,13 @@ private slots:
 	void on_pushButtonClear_clicked();
 	void on_pushButtonFill_clicked();
 	void onTabifiedDockWidgetActivated(QDockWidget* dockWidget);
+	void on_PB_SetSphereColor_clicked();
+	void on_PB_SetLightColor_clicked();
+	void on_PB_SetAmbientColor_clicked();
 	void on_PB_RenderObject_clicked();
 	void on_CB_Object_currentIndexChanged(int idx);
-	void on_HSB_Zenit_valueChanged(int newValue);
-	void on_HSB_Azimut_valueChanged(int newZenitVal);
+	void on_HS_Zenit_valueChanged(int newValue);
+	void on_HS_Azimut_valueChanged(int newZenitVal);
 	void on_HS_Distance_valueChanged(int newDistance);
 
 	//Tools slots

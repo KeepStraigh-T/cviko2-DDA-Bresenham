@@ -15,14 +15,14 @@ void Mesh::buildCubeMesh(double edgeLen)
 	const int num_CubeVertices = 8;
 
 	vertices.resize(num_CubeVertices);
-	vertices[0] = Vertex( -x/2.0, -y/2.0, -z/2.0 ); // Index 0: Back-Bottom-Left
-	vertices[1] = Vertex( -x/2.0, y/2.0, -z/2.0 ); // Index 1: Back-Bottom-Right
-	vertices[2] = Vertex( x/2.0, y/2.0, -z/2.0 ); // Index 2: Front-Bottom-Right
-	vertices[3] = Vertex( x/2.0, -y/2.0, -z/2.0 ); // Index 3: Front-Bottom-Left
-	vertices[4] = Vertex( -x/2.0, -y/2.0, z/2.0 ); // Index 4: Back-Top-Left
-	vertices[5] = Vertex( -x/2.0, y/2.0, z/2.0 ); // Index 5: Back-Top-Right
-	vertices[6] = Vertex( x/2.0, y/2.0, z/2.0 ); // Index 6: Front-Top-Right
-	vertices[7] = Vertex( x/2.0, -y/2.0, z/2.0 ); // Index 7: Front-Top-Left
+	vertices[0] = Point3D( -x/2.0, -y/2.0, -z/2.0 ); // Index 0: Back-Bottom-Left
+	vertices[1] = Point3D( -x/2.0, y/2.0, -z/2.0 ); // Index 1: Back-Bottom-Right
+	vertices[2] = Point3D( x/2.0, y/2.0, -z/2.0 ); // Index 2: Front-Bottom-Right
+	vertices[3] = Point3D( x/2.0, -y/2.0, -z/2.0 ); // Index 3: Front-Bottom-Left
+	vertices[4] = Point3D( -x/2.0, -y/2.0, z/2.0 ); // Index 4: Back-Top-Left
+	vertices[5] = Point3D( -x/2.0, y/2.0, z/2.0 ); // Index 5: Back-Top-Right
+	vertices[6] = Point3D( x/2.0, y/2.0, z/2.0 ); // Index 6: Front-Top-Right
+	vertices[7] = Point3D( x/2.0, -y/2.0, z/2.0 ); // Index 7: Front-Top-Left
 
 	const int nFaces = 12;
 	faces.resize(nFaces);
@@ -54,7 +54,7 @@ void Mesh::buildCubeMesh(double edgeLen)
 	facesColors[11].setRgb(255, 165, 255);
 }
 
-void Mesh::buildUVSphereMesh(double radius, int theta_count, int phi_count)
+void Mesh::buildUVSphereMesh(double radius, int theta_count, int phi_count, QColor color)
 {
 	clearMesh();
 
@@ -66,17 +66,17 @@ void Mesh::buildUVSphereMesh(double radius, int theta_count, int phi_count)
 
 	idx_t c = 0;
 
-	// Add the top vertex
-	vertices[c++] = (Vertex(0.0, radius, 0.0));
+	// Add the top Point3D
+	vertices[c++] = (Point3D(0.0, radius, 0.0));
 
-	// Generate the mid-section vertex grid
+	// Generate the mid-section Point3D grid
 	for(int i = 1; i <= theta_count - 1; i++)
 	{
 		double theta = i * theta_step;
 		for(int j = 0; j < phi_count; j++)
 		{
 			double phi = j * phi_step;
-			vertices[c++] =  Vertex(
+			vertices[c++] =  Point3D(
 															radius*sin(theta)*cos(phi),
 															radius*cos(theta),
 															-radius*sin(theta)*sin(phi) // "-" to respect right-hand rule
@@ -84,8 +84,8 @@ void Mesh::buildUVSphereMesh(double radius, int theta_count, int phi_count)
 		}
 	}
 
-	// Add last bottom vertex
-	vertices[c] = Vertex(0.0, -radius, 0.0);
+	// Add last bottom Point3D
+	vertices[c] = Point3D(0.0, -radius, 0.0);
 	//assert(c == num_vertices - 1);
 	 
 	const int num_faces = 2*phi_count + 2*phi_count*(theta_count - 2);
@@ -139,8 +139,7 @@ void Mesh::buildUVSphereMesh(double radius, int theta_count, int phi_count)
 	//assert(c == num_faces - 1);
 
 	for(int i = 0; i < faces.size(); i++)
-		facesColors[i] = Qt::blue;
-
+		facesColors[i] = color;
 }
 
 void Mesh::clearMesh()
@@ -149,3 +148,4 @@ void Mesh::clearMesh()
 	faces.clear();
 	facesColors.clear();
 }
+

@@ -81,19 +81,26 @@ void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
 		int x = start.x();
 		int y = start.y();
 
-		while(x < end.x())
+		while(x <= end.x())
 		{
-			x += 1;
-
-			if(p > 0)
+			setPixel(x, y, color);
+			//setPixel(x + 1, y, color);
+			//setPixel(x + 1, y + 1, color);
+			//setPixel(x + 1, y - 1, color);
+			//setPixel(x - 1, y + 1, color);
+			//setPixel(x - 1, y - 1, color);
+			//setPixel(x - 1 , y, color);
+			//setPixel(x, y + 1, color);
+			//setPixel(x, y - 1, color);
+			if(p > 0) // y[i]
 			{
 				y += yInc;
 				p += k2;
 			}
-			else
+			else // y[i+1]
 				p += k1;
 
-			setPixel(x, y, color);
+			x += 1;
 		}
 	}
 	else																											// dy > dx -> m > 1 or m < -1
@@ -118,10 +125,17 @@ void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
 		int x = start.x();
 		int y = start.y();
 
-		while(y < end.y())
+		while(y <= end.y())
 		{
-			y += 1;
-
+			setPixel(x, y, color);
+			//setPixel(x + 1, y, color);
+			//setPixel(x + 1, y + 1, color);
+			//setPixel(x + 1, y - 1, color);
+			//setPixel(x - 1, y + 1, color);
+			//setPixel(x - 1, y - 1, color);
+			//setPixel(x - 1 , y, color);
+			//setPixel(x, y + 1, color);
+			//setPixel(x, y - 1, color);
 			if(p > 0)
 			{
 				x += xInc;
@@ -130,7 +144,7 @@ void ViewerWidget::drawLineBresenham(QPoint start, QPoint end, QColor color)
 			else
 				p += k1;
 
-			setPixel(x, y, color);
+			y += 1;
 		}
 	}
 }
@@ -185,7 +199,7 @@ QVector<QPoint> ViewerWidget::clippingPolygon()
 	QVector<QPoint> tempPoints = transformedVert;
 	QVector<QPoint> clippedPoints;
 
-	int xMin[]{0, -(img->height() - 1), -(img->width() - 1), 0}; // need to decrement - axis goes from 0 to height/weight - 1)
+	int xMin[] {0, -(img->height() - 1), -(img->width() - 1), 0}; // need to decrement - axis goes from 0 to height/weight - 1)
 
 	int turns = 0;
 	while(turns < 4)
@@ -216,6 +230,7 @@ QVector<QPoint> ViewerWidget::clippingPolygon()
 		}
 		tempPoints = clippedPoints;
 		clippedPoints.clear();
+
 		for(qsizetype i = 0; i < tempPoints.size(); i++)
 		{
 			int xRotated = -tempPoints[i].y();
@@ -225,7 +240,6 @@ QVector<QPoint> ViewerWidget::clippingPolygon()
 		}
 		turns++;
 	}
-
 	return tempPoints;
 }
 QVector<QPoint> ViewerWidget::clippingLine()
@@ -305,9 +319,9 @@ void ViewerWidget::scanLine(const QVector <QPoint>& nodes, const QColor& color)
 
 	int ymin, ymax{};
 
-	// create list of edges based on polygon vertices (orient the edge from top to down (swap edge's vertices if needed))
+	// create vector of edges based on polygon vertices (orient the edge from top to down (swap edge's vertices if needed))
 	QVector <Edge> edges;																																												// polygon's edges
-	edges.resize(nodes.size());																				// reduce/remove reallcoations						// vertives number == edges number 
+	edges.resize(nodes.size());																									// vertives number == edges number 
 
 	Edge e{};
 	QPoint p1, p2{};
@@ -317,7 +331,7 @@ void ViewerWidget::scanLine(const QVector <QPoint>& nodes, const QColor& color)
 		p1 = nodes[current];
 		p2 = nodes[next];
 
-		ymax = p1.y() > ymax ? p1.y() : ymax;
+		//ymax = p1.y() > ymax ? p1.y() : ymax;
 
 		if(p1.y() == p2.y())																																										// skip horizontal edge
 			continue;
@@ -328,7 +342,7 @@ void ViewerWidget::scanLine(const QVector <QPoint>& nodes, const QColor& color)
 		e.xz = p1.x();
 		int xk = p2.x();
 		e.w = (xk - e.xz) / (double) (p2.y() - p1.y());																													// 1 / m (m is slope)
-		e.yk = p2.y() - 1;																																											// dont know why -1 though
+		e.yk = p2.y() - 1;																																											
 
 		edges.append(e);
 	}
@@ -339,6 +353,7 @@ void ViewerWidget::scanLine(const QVector <QPoint>& nodes, const QColor& color)
 	std::sort(edges.begin(), edges.end());																																		// sort list so e[i].yz <= e[i+1].yz
 
 	ymin = edges[0].yz;
+	ymax = edges[edges.size() - 1].yk;
 
 	struct scanLineEdge
 	{
@@ -350,7 +365,7 @@ void ViewerWidget::scanLine(const QVector <QPoint>& nodes, const QColor& color)
 	QVector <QVector <scanLineEdge>> edgesTable{};
 	edgesTable.resize(ymax - ymin + 1);
 
-	// fill every row (QList) in table (QVector) with edges that have startpoint in this row
+	// fill every row in table with edges that have startpoint in this row
 	for(qsizetype j = 0; j < edges.size(); j++)
 	{
 		scanLineEdge se;
@@ -361,13 +376,13 @@ void ViewerWidget::scanLine(const QVector <QPoint>& nodes, const QColor& color)
 		edgesTable[edges[j].yz - ymin].append(se);
 	}
 
-	int y{ymin};																																																// active row (starts from min row)
+	int y {ymin};																																																// active row (starts from min row)
 	QVector <scanLineEdge> activeEdges{};
-	activeEdges.resize(edges.size());																																						// reduce/remove reallcoations
+	activeEdges.resize(edges.size());																																						
 
 	for(qsizetype i = 0; i < edgesTable.size(); i++)
 	{
-		activeEdges.append(edgesTable[i]);																																				// add new edges from row to activeEdges to if they start in this row
+		activeEdges.append(edgesTable[i]);																																				// add new edges from row to activeEdges if they start in this row
 
 		for(qsizetype k = 1; k < activeEdges.size(); k++)																													// sort if needed
 		{
@@ -385,11 +400,11 @@ void ViewerWidget::scanLine(const QVector <QPoint>& nodes, const QColor& color)
 
 		for(qsizetype j = 0; j + 1 < activeEdges.size(); j += 2)																									// j + 1 to check if next is last 
 		{
-			int xCeil{qCeil(activeEdges[j].x)};
-			int xFloor{qFloor(activeEdges[j + 1].x)};
+			int xCeil {qCeil(activeEdges[j].x)};
+			int xFloor {qFloor(activeEdges[j + 1].x)};
 			if(xCeil <= xFloor)
 			{
-				int x{xCeil};
+				int x {xCeil};
 				while(x <= xFloor)																																										// here actual filling is being done
 					setPixel(x++, y, color);
 			}
@@ -413,7 +428,7 @@ void ViewerWidget::scanLineTriangle(QPoint p0, QPoint p1, QPoint p2, const QColo
 	if(p2.y() < p0.y()) std::swap(p0, p2);
 	if(p2.y() < p1.y()) std::swap(p1, p2);
 
-	// 2. now: p0.y <= p1.y <= p2.y
+	// 2.now: p0.y <= p1.y <= p2.y
 
 	// handle special cases (sort by x (ascending))
 	//if(p1.y() == p2.y())
@@ -465,17 +480,17 @@ void ViewerWidget::fillTopTriangle(QPoint p0, QPoint p1, QPoint p2, const QColor
 			{
 				if(z_const == std::numeric_limits<double>::lowest())
 					setPixel(xStart, y, color);
-				else if(ZBuffer->at(y * img->width() + xStart) < z_const)
+				else if(isInside(xStart, y) && ZBuffer->at(y * img->width() + xStart) < z_const)
 				{
 					ZBuffer->at(y * img->width() + xStart) = z_const;
 					setPixel(xStart, y, color);
 				}
-				xStart++;
 			}
+			xStart++;
 		}
-			x1 += w1;
-			x2 += w2;
-			y++;
+		x1 += w1;
+		x2 += w2;
+		y++;
 	}
 }
 
@@ -506,7 +521,7 @@ void ViewerWidget::fillBottomTriangle(QPoint p0, QPoint p1, QPoint p2, const QCo
 			{
 				if(z_const == std::numeric_limits<double>::lowest())
 					setPixel(xStart, y, color);
-				else if(ZBuffer->at(y * img->width() + xStart) < z_const)
+				else if(isInside(xStart, y) && ZBuffer->at(y * img->width() + xStart) < z_const)
 				{
 					ZBuffer->at(y * img->width() + xStart) = z_const;
 					setPixel(xStart, y, color);
@@ -703,7 +718,7 @@ void ViewerWidget::coonsoveCubicBSpline(QColor color, int algType)
 			Q0 = Q1;
 		}
 	}
-
+	
 }
 /* Algorithms */
 
@@ -716,9 +731,7 @@ void ViewerWidget::translation(QPoint currentMousePos)
 	QPoint delta = currentMousePos - lastMousePos;
 
 	for(QPoint& vertx : transformedVert)
-	{
 		vertx += delta;
-	}
 
 	lastMousePos = currentMousePos;
 	update();
@@ -841,15 +854,6 @@ void ViewerWidget::drawPolygon(QColor color, int algType, int interpType)
 				scanLine(transformedVert, color);																																													// fill polygon (n > 3)
 		}
 		QVector <QPoint> clippedPoints = clippingPolygon();
-
-		//QVector <QPoint> clippedPoints = clippingPolygon();
-		//if(areaIsFilled)
-		//{
-		//	if(clippedPoints.size() == 3)																																															// change this maybe because it'll fill clipped polygon(vertices > 3) too
-		//		scanLineTriangle(clippedPoints[0], clippedPoints[1], clippedPoints[2], color, interpType);															// fill triangle
-		//	else
-		//		scanLine(clippedPoints, color);																																													// fill polygon (n > 3)
-		//}
 
 		if(clippedPoints.size() > 1)																																	// whole/clipped polygon is inside clipping area
 		{

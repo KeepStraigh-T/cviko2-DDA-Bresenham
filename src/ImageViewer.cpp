@@ -432,7 +432,40 @@ void ImageViewer::on_pushButtonFill_clicked()
 	vW->drawPolygon(globalColor, ui->comboBoxLineAlg->currentIndex(), ui->comboBoxInterpAlg->currentIndex());
 }
 
+/* 3D */
 
+void ImageViewer::on_PB_SetSphereColor_clicked()
+{
+	QColor newColor = QColorDialog::getColor(globalColor, this);
+	if(newColor.isValid())
+	{
+		QString style_sheet = QString("background-color: %1;").arg(newColor.name(QColor::HexRgb));
+		ui->PB_SetSphereColor->setStyleSheet(style_sheet);
+		scene.setObjColor(newColor);
+	}
+}
+
+void ImageViewer::on_PB_SetLightColor_clicked()
+{
+	QColor newColor = QColorDialog::getColor(globalColor, this);
+	if(newColor.isValid())
+	{
+		QString style_sheet = QString("background-color: %1;").arg(newColor.name(QColor::HexRgb));
+		ui->PB_SetLightColor->setStyleSheet(style_sheet);
+		scene.setLightColor(newColor);
+	}
+}
+
+void ImageViewer::on_PB_SetAmbientColor_clicked()
+{
+	QColor newColor = QColorDialog::getColor(globalColor, this);
+	if(newColor.isValid())
+	{
+		QString style_sheet = QString("background-color: %1;").arg(newColor.name(QColor::HexRgb));
+		ui->PB_SetAmbientColor->setStyleSheet(style_sheet);
+		scene.setAmbientColor(newColor);
+	}
+}
 
 void ImageViewer::on_actionLoad_vtk_triggered()
 {
@@ -461,7 +494,7 @@ void ImageViewer::on_actionLoad_vtk_triggered()
 		return;
 	}
 
-	// 1. Skip setup until we hit the POINTS declaration
+	// Skip setup until we hit the POINTS declaration
 	QString token;
 	int numVertices = 0;
 	while (!in.atEnd()) 
@@ -475,19 +508,19 @@ void ImageViewer::on_actionLoad_vtk_triggered()
 		}
 	}
 
-	// 2. Read exactly the number of vertices specified
-	std::vector<Vertex> meshVertices;
+	// Read exactly the number of vertices specified
+	std::vector<Point3D> meshVertices;
 	meshVertices.resize(numVertices);
 	
 	for (int i = 0; i < numVertices; ++i)
 	{
 		double x, y, z;
 		in >> x >> y >> z;
-		meshVertices[i] = Vertex(x, y, z);
+		meshVertices[i] = Point3D(x, y, z);
 	}
 	scene.objMesh.setVertices(meshVertices);
 
-	// 3. Find the POLYGONS section
+	// Find the POLYGONS section
 	int numFaces = 0;
 	int totalItems = 0;
 	while (!in.atEnd())
@@ -501,7 +534,7 @@ void ImageViewer::on_actionLoad_vtk_triggered()
 		}
 	}
 
-	// 4. Read exactly the number of faces specified
+	// Read exactly the number of faces specified
 	std::vector<std::array<idx_t, 3>> meshFaces;
 	meshFaces.reserve(numFaces);
 
@@ -510,7 +543,7 @@ void ImageViewer::on_actionLoad_vtk_triggered()
 		int numPointsInFace;
 		idx_t v1, v2, v3;
 		 
-		in >> numPointsInFace; // VTK format starts each polygon line with the vertex count (usually 3)
+		in >> numPointsInFace; // VTK format starts each polygon line with the Point3D count (usually 3)
 		in >> v1 >> v2 >> v3;
 
 		meshFaces.push_back({v1, v2, v3});
@@ -548,7 +581,7 @@ void ImageViewer::on_actionSave_vtk_triggered()
 		out << "DATASET POLYDATA" << '\n';
 		out << "POINTS " << scene.objMesh.getVertices().size() << ' ' << "double" << '\n';
 
-		const std::vector<Vertex> meshVertices = scene.objMesh.getVertices();
+		const std::vector<Point3D> meshVertices = scene.objMesh.getVertices();
 		for(idx_t i = 0; i < meshVertices.size(); i++)
 			out << (int) meshVertices[i].x << ' ' << (int) meshVertices[i].y << ' ' << (int) meshVertices[i].z << '\n';
 
@@ -593,18 +626,23 @@ void ImageViewer::on_CB_Object_currentIndexChanged(int idx)
 }
 
 void ImageViewer::renderScene()
-{
-	scene.cam.setCamera(ui->HSB_Zenit->value(), ui->HSB_Azimut->value(), ui->HS_Distance->value());
-	scene.transformToCameraSpace();
-	scene.project(ui->CB_ProjType->currentIndex(), ui->HS_Distance->value());
-
+{	
 	const std::vector<std::array<idx_t, 3>>& faces = scene.objMesh.getFaces();
-	const std::vector<QColor>& facesColors = scene.getFacesColors();
-	const std::vector<Vertex>& sceneVertices = scene.getSceneVertices();
+	 std::vector<QColor>& facesColors = scene.getFacesColors();
+	const std::vector<Point3D>& sceneVertices = scene.getSceneVertices();
+
+	scene.cam.setCamera(ui->HS_Zenit->value(), ui->HS_Azimut->value(), ui->HS_Distance->value());
+	scene.transformToCameraSpace();
 
 	int w = vW->getImage()->width();
 	int h = vW->getImage()->height();
+
 	scene.initZBuffer(h * w);
+
+	for(size_t i = 0; i < faces.size(); i++)
+		facesColors[i] = scene.calculateLighing(i);
+
+	scene.project(ui->CB_ProjType->currentIndex(), ui->HS_Distance->value()); // z distance for central is set here
 	// draw faces
 	for(size_t i = 0; i < faces.size(); i++)
 	{
@@ -612,12 +650,12 @@ void ImageViewer::renderScene()
 		QPoint p2(sceneVertices[faces[i][1]].x + w/2.0 + 0.5, sceneVertices[faces[i][1]].y + h/2.0 + 0.5);
 		QPoint p3(sceneVertices[faces[i][2]].x + w/2.0 + 0.5, sceneVertices[faces[i][2]].y + h/2.0 + 0.5);
 
-		//if(ui->CB_Object->currentText() == "Cube")
-		//{
-			double z_const = (sceneVertices[faces[i][0]].z + sceneVertices[faces[i][1]].z + sceneVertices[faces[i][2]].z) / 3.0; // average const z-coordinate for each pixel in 2D triangle
-			int flatFilling = 0;
-			vW->scanLineTriangle(p1, p2, p3, facesColors[i], flatFilling, scene.getZBuffer(), z_const);
-		//}
+		//if(!newColor.isValid())
+		//	qDebug() << "Not a valid color" << '\n';
+
+		double z_const = (sceneVertices[faces[i][0]].z + sceneVertices[faces[i][1]].z + sceneVertices[faces[i][2]].z) / 3.0; // average const z-coordinate for each pixel in 2D triangle
+		int flatFilling = 0;
+		vW->scanLineTriangle(p1, p2, p3, facesColors[i], flatFilling, scene.getZBuffer(), z_const);
 	}
 	// draw Wireframe
 	/*for(size_t i = 0; i < faces.size(); i++)
@@ -630,6 +668,7 @@ void ImageViewer::renderScene()
 		vW->drawLineBresenham(p2, p3, globalColor);
 		vW->drawLineBresenham(p3, p1, globalColor);
 	}*/
+	// qDebug() << "Distance" << ui->HS_Distance->value();
 }
 
 void ImageViewer::on_PB_RenderObject_clicked()
@@ -644,29 +683,42 @@ void ImageViewer::on_PB_RenderObject_clicked()
 			QMessageBox::critical(this, "Error", "Please, enter the length of cube edge.");
 			return;
 		}
-		scene.objMesh.buildCubeMesh(cubeEdgeLen);
+		scene.objMesh.buildCubeMesh(cubeEdgeLen);  // build mesh
+		// Adjust values on distance hor. slider
+		ui->HS_Distance->setMinimum(cubeEdgeLen);
+		ui->HS_Distance->setMaximum(3.0*cubeEdgeLen);
 	}
 	else if(ui->CB_Object->currentText() == "Sphere")
 	{
-		if(ui->DSB_Radius->value() == 0.0)
+		double sphereRadius = ui->DSB_Radius->value();
+		if(sphereRadius == 0.0)
 		{
 			QMessageBox::critical(this, "Error", "Please, enter the radius of sphere.");
 			return;
 		}
 		// +1 because n paralles split sphere into n+1 horizontal segments
-		scene.objMesh.buildUVSphereMesh(ui->DSB_Radius->value(), ui->SB_Parallels->value() + 1, ui->SB_Meridians->value());
+		scene.objMesh.buildUVSphereMesh(sphereRadius, ui->SB_Parallels->value() + 1, ui->SB_Meridians->value(), scene.getObjColor()); // build mesh
+		// Adjust values on distance hor. slider
+		ui->HS_Distance->setMinimum(sphereRadius);
+		ui->HS_Distance->setMaximum(3.0*sphereRadius);
 	}
+
+	scene.setSpecCoeffs(Point3D(ui->DSB_xCoefSpec->value(), ui->DSB_yCoefSpec->value(), ui->DSB_zCoefSpec->value()));
+	scene.setDiffCoeffs(Point3D(ui->DSB_xCoefDiff->value(), ui->DSB_yCoefDiff->value(), ui->DSB_zCoefDiff->value()));
+	scene.setLightIntensity(Point3D(ui->DSB_rLightIntensity->value(), ui->DSB_gLightIntensity->value(), ui->DSB_bLightIntensity->value()));
+	scene.setAmbientIntensity(Point3D(ui->DSB_rAmbientIntensity->value(), ui->DSB_gAmbientIntensity->value(), ui->DSB_bAmbientIntensity->value()));
+	scene.setSharpness(ui->SB_Sharpness->value());
 
 	renderScene();
 }
 
-void ImageViewer::on_HSB_Zenit_valueChanged(int newZenitVal)
+void ImageViewer::on_HS_Zenit_valueChanged(int newZenitVal)
 {
 	vW->clear();
 	renderScene();
 }
 
-void ImageViewer::on_HSB_Azimut_valueChanged(int newAzimutVal)
+void ImageViewer::on_HS_Azimut_valueChanged(int newAzimutVal)
 {
 	vW->clear();
 	renderScene();

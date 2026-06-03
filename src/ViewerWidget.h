@@ -12,10 +12,10 @@ struct ControlPoint
 	};
 };
 
-struct Point3D
+struct Vertex
 {
 	int x, y, z;
-	Point3D(int xx, int yy, int zz): x(xx), y(yy), z(zz) {};
+	Vertex(int xx, int yy, int zz): x(xx), y(yy), z(zz) {};
 };
 
 class ViewerWidget: public QWidget
